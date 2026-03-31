@@ -3,9 +3,9 @@
  *
  * 将用户样式、UA 默认值、继承值合并为 ComputedStyle。
  */
-import type { StyleNode, ComputedStyle, BoxModelStyle, InheritedStyle } from '../types/style.js';
+import type { StyleNode, ComputedStyle, BoxModelStyle, InheritedStyle, FlexStyle } from '../types/style.js';
 import type { CSSValue } from '../types/css-values.js';
-import { INITIAL_BOX_MODEL } from './initial.js';
+import { INITIAL_BOX_MODEL, INITIAL_FLEX } from './initial.js';
 import { getUADefaults } from './initial.js';
 import { resolveInheritedStyle } from './inherit.js';
 import { INHERITABLE_PROPERTIES } from './properties.js';
@@ -46,7 +46,10 @@ export function computeStyle(
     : rootFontSize;
 
   // 3. 深拷贝用户样式以避免修改原始数据
-  const userStyle = { ...node.style };
+  const userStyle = { ...node.style } as Record<string, unknown>;
+
+  // 3.5 展开 shorthand 属性
+  expandShorthands(userStyle);
 
   // 4. 解析相对值
   resolveRelativeValues(userStyle, parentFontSize, rootFontSize);
@@ -56,7 +59,7 @@ export function computeStyle(
     ...INITIAL_BOX_MODEL,
     ...uaDefaults,
     ...userStyle,
-  } as Required<BoxModelStyle>;
+  } as unknown as Required<BoxModelStyle>;
 
   // 6. 合并可继承属性：用户值 > 父元素继承值 > UA 默认值 > 初始值
   const inherited = resolveInheritedStyle(
@@ -65,7 +68,49 @@ export function computeStyle(
     uaDefaults,
   );
 
-  return { boxModel, inherited };
+  // 7. 合并 Flexbox 属性：用户值 > 初始值
+  // gap shorthand 展开：gap → rowGap + columnGap
+  const userGap = userStyle.gap as CSSValue | undefined;
+  const hasRowGap = 'rowGap' in userStyle;
+  const hasColGap = 'columnGap' in userStyle;
+
+  const flex: Required<FlexStyle> = {
+    ...INITIAL_FLEX,
+    ...userStyle,
+  } as unknown as Required<FlexStyle>;
+
+  // 如果设置了 gap 但没单独设置 rowGap/columnGap，则用 gap 值覆盖
+  if (userGap && userGap.type === 'length') {
+    if (!hasRowGap) flex.rowGap = userGap;
+    if (!hasColGap) flex.columnGap = userGap;
+  }
+
+  return { boxModel, inherited, flex };
+}
+
+/**
+ * 展开 shorthand 属性（padding, margin）
+ */
+function expandShorthands(style: Record<string, unknown>): void {
+  // padding: px(20) → paddingTop/Right/Bottom/Left
+  const padding = style.padding as CSSValue | undefined;
+  if (padding && padding.type === 'length') {
+    if (!('paddingTop' in style)) style.paddingTop = padding;
+    if (!('paddingRight' in style)) style.paddingRight = padding;
+    if (!('paddingBottom' in style)) style.paddingBottom = padding;
+    if (!('paddingLeft' in style)) style.paddingLeft = padding;
+    delete style.padding;
+  }
+
+  // margin: px(20) → marginTop/Right/Bottom/Left
+  const margin = style.margin as CSSValue | undefined;
+  if (margin && margin.type === 'length') {
+    if (!('marginTop' in style)) style.marginTop = margin;
+    if (!('marginRight' in style)) style.marginRight = margin;
+    if (!('marginBottom' in style)) style.marginBottom = margin;
+    if (!('marginLeft' in style)) style.marginLeft = margin;
+    delete style.margin;
+  }
 }
 
 /**

@@ -1,6 +1,6 @@
 {
   "name": "purelayout",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Pure JavaScript/TypeScript CSS layout engine — no browser DOM required",
   "author": "peterfei",
   "repository": {
@@ -54,6 +54,7 @@
   "keywords": [
     "css",
     "layout",
+    "flexbox",
     "block",
     "inline",
     "ssr",

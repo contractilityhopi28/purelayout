@@ -11,7 +11,7 @@ import type {
 
 // ===== 显示与盒模型属性类型 =====
 
-export type DisplayValue = 'block' | 'inline' | 'inline-block' | 'none';
+export type DisplayValue = 'block' | 'inline' | 'inline-block' | 'flex' | 'none';
 
 export type OverflowValue = 'visible' | 'hidden' | 'scroll' | 'auto';
 
@@ -26,6 +26,31 @@ export type WhiteSpaceValue = 'normal' | 'nowrap' | 'pre' | 'pre-wrap' | 'pre-li
 export type TextAlignValue = 'left' | 'right' | 'center' | 'justify';
 
 export type VerticalAlignValue = 'baseline' | 'top' | 'middle' | 'bottom';
+
+// ===== Flexbox 属性 =====
+
+export type FlexDirectionValue = 'row' | 'row-reverse' | 'column' | 'column-reverse';
+export type FlexWrapValue = 'nowrap' | 'wrap' | 'wrap-reverse';
+export type JustifyContentValue = 'flex-start' | 'flex-end' | 'center' | 'space-between' | 'space-around' | 'space-evenly';
+export type AlignItemsValue = 'flex-start' | 'flex-end' | 'center' | 'baseline' | 'stretch';
+export type AlignContentValue = 'flex-start' | 'flex-end' | 'center' | 'space-between' | 'space-around' | 'stretch';
+export type AlignSelfValue = 'auto' | 'flex-start' | 'flex-end' | 'center' | 'baseline' | 'stretch';
+
+export interface FlexStyle {
+  flexDirection: FlexDirectionValue;
+  flexWrap: FlexWrapValue;
+  justifyContent: JustifyContentValue;
+  alignItems: AlignItemsValue;
+  alignContent: AlignContentValue;
+  flexGrow: number;
+  flexShrink: number;
+  flexBasis: CSSDimensionValue;
+  alignSelf: AlignSelfValue;
+  order: number;
+  gap: CSSDimensionValue;
+  rowGap: CSSDimensionValue;
+  columnGap: CSSDimensionValue;
+}
 
 // ===== 可继承的文本属性 =====
 
@@ -77,7 +102,7 @@ export interface BoxModelStyle {
 
 export interface StyleNode {
   tagName: string;
-  style: Partial<BoxModelStyle & InheritedStyle>;
+  style: Partial<BoxModelStyle & InheritedStyle & FlexStyle>;
   children: (StyleNode | string)[];
 }
 
@@ -86,4 +111,5 @@ export interface StyleNode {
 export interface ComputedStyle {
   boxModel: Required<BoxModelStyle>;
   inherited: Required<InheritedStyle>;
+  flex: Required<FlexStyle>;
 }

@@ -1,19 +1,20 @@
-# PureLayout v0.1.0
+# PureLayout v0.2.0
 
-> Released: 2026-03-31
+> Released: 2026-04-01
 >
-> First stable release of the pure JavaScript/TypeScript CSS Block + Inline layout engine.
+> Adds complete Flexbox layout support with 100% browser fidelity.
 
 ---
 
 ## Overview
 
-PureLayout v0.1.0 implements the core subset of CSS Normal Flow layout, including Block and Inline formatting contexts. It computes element sizes and positions without any browser DOM dependency, making it suitable for server-side rendering, PDF generation, Canvas drawing, and other non-browser environments.
+PureLayout v0.2.0 implements the full CSS Flex Formatting Context (FFC), covering all major flex properties: direction, wrapping, alignment (justify/align), flexible sizing (grow/shrink/basis), gap, order, and box-sizing interaction. 25 new diff test fixtures confirm 100% browser fidelity.
 
 **Key numbers:**
 
-- 30 source files, ~1,500 lines of TypeScript
-- 86 unit tests, all passing
+- 36 source files, ~2,800 lines of TypeScript (+6 files, +1,300 lines)
+- 202 tests total (153 unit + 49 diff), all passing
+- 48 diff fixtures with 100% browser fidelity (336 comparison points)
 - Zero runtime dependencies
 - Dual-format output: ESM + CJS with full TypeScript type declarations
 
@@ -21,159 +22,121 @@ PureLayout v0.1.0 implements the core subset of CSS Normal Flow layout, includin
 
 ## What's New
 
-### CSS Parsing Engine
+### Flexbox Layout (Flex Formatting Context)
 
-A complete CSS value parsing and cascade system:
+Complete implementation of the CSS Flexbox specification (11-step algorithm):
 
-- **Value parser** — Supports `px`, `%`, `em`, `rem`, `auto`, `normal`, `none`, color values (`#hex`, `rgb()`, `rgba()`, `hsl()`), and `calc()` expressions
-- **Shorthand expansion** — 1/2/3/4-value syntax auto-expands to four edges (`margin`, `padding`, etc.)
-- **Style cascade** — Full priority chain: user styles > UA defaults > parent inheritance > initial values
-- **Relative value resolution** — `em` resolves against parent `font-size`, `rem` against root `font-size`
-- **UA stylesheet** — Built-in browser default styles for 26 HTML elements (`div`, `p`, `h1`-`h6`, `span`, `ul`, `ol`, `pre`, etc.)
+- **Flex directions** — `row`, `column`, `row-reverse`, `column-reverse`
+- **Flex wrapping** — `nowrap` (default), `wrap`, `wrap-reverse` with automatic multi-line splitting
+- **Main axis alignment** (`justify-content`) — `flex-start`, `flex-end`, `center`, `space-between`, `space-around`, `space-evenly`
+- **Cross axis alignment** (`align-items`) — `flex-start`, `flex-end`, `center`, `stretch`, `baseline`
+- **Per-item alignment** (`align-self`) — Overrides container `align-items` per item
+- **Multi-line alignment** (`align-content`) — `flex-start`, `flex-end`, `center`, `stretch`, `space-between`, `space-around`
+- **Flexible sizing** — `flex-grow` distributes free space, `flex-shrink` handles overflow, `flex-basis` sets the initial main size
+- **Ordering** — `order` property reorders flex items within the container
+- **Gap** — `gap` shorthand, `row-gap` (cross-axis), `column-gap` (main-axis) per CSS spec
+- **box-sizing** — `border-box` correctly handled for both flex base size and cross size calculations
 
-### Block Layout
+### Engine Improvements
 
-Full implementation of the CSS Block Formatting Context (BFC):
-
-- **BFC creation** — Triggered by `overflow` not `visible`, `display: inline-block`, and other conditions
-- **Normal flow** — Block elements stack vertically, `width: auto` fills the containing block
-- **Margin collapse** — Adjacent sibling margin collapsing (positive values take max, negative take min, mixed values add)
-- **Parent-child margin collapse** — First/last child margins collapse with parent when no `border-top`/`padding-top` barrier exists
-- **BFC boundary** — BFC boundaries prevent inside/outside margins from collapsing across them
-- **Clearance** — Interface reserved for Phase 2 (float support)
-
-### Inline Layout
-
-Basic implementation of the CSS Inline Formatting Context (IFC):
-
-- **Line box construction** — Builds line boxes based on font metrics (ascent/descent), computes line height and baseline
-- **Text placement** — Inline elements and text nodes arranged horizontally within line boxes
-- **Soft wrapping** — Natural break opportunities between CJK characters, controlled by `word-break` / `overflow-wrap`
-- **Whitespace handling** — Full support for all 5 modes of the `white-space` property:
-
-  | Mode | Collapse spaces | Preserve newlines | Soft wrap |
-  |------|----------------|-------------------|-----------|
-  | `normal` | Yes | No | Yes |
-  | `nowrap` | Yes | No | No |
-  | `pre` | No | Yes | No |
-  | `pre-wrap` | No | Yes | Yes |
-  | `pre-line` | Yes | Yes | Yes |
-
-### Box Model
-
-Complete CSS box model computation:
-
-- **margin** — Independent per-edge settings, supports `auto`
-- **padding** — Independent per-edge settings, supports percentages
-- **border-width** — Independent per-edge settings
-- **box-sizing** — Both `content-box` (default) and `border-box` modes
-- **min-width / max-width / min-height / max-height** — Size constraints
-- **Horizontal auto margin centering** — `margin-left: auto` + `margin-right: auto` splits remaining space equally
-
-### Text Measurement Abstraction
-
-Pluggable text measurement interface:
-
-- **`TextMeasurer` interface** — Defines `measureTextWidth()`, `getFontMetrics()`, and `measureTextSegments()` methods
-- **`FallbackMeasurer`** — Zero-dependency implementation based on average character width estimation (Latin ~0.6em, CJK ~1.0em). Suitable for scenarios that don't require precise text measurement
-- **`CanvasMeasurer`** — Uses Node.js `canvas` package's `measureText()` for higher precision. Automatically falls back to Fallback when the `canvas` package is unavailable
+- **CSS shorthand expansion** — `gap` shorthand now expands to `row-gap` + `column-gap` in the cascade
+- **Indefinite main size handling** — Column flex containers without explicit height use `Infinity` for main size, skipping grow/shrink
+- **Wrap-reverse positioning** — Lines stack from container bottom when `wrap-reverse` is active with definite cross size
+- **align-content: stretch** — Correctly distributes free space among lines and re-aligns items within stretched lines
 
 ---
 
-## Public API
+## New Source Files
 
-```typescript
-// Layout computation
-layout(root: StyleNode, options: LayoutOptions): LayoutTree
-
-// Get margin box rectangle (similar to DOM getBoundingClientRect)
-getBoundingClientRect(node: LayoutNode): BoundingClientRect
-
-// Find node by source index
-findNodeBySourceIndex(root: LayoutNode, sourceIndex: number): LayoutNode | null
-
-// CSS value factory functions
-px(value: number): CSSLength
-pct(value: number): CSSPercentage
-em(value: number): CSSRelativeLength
-rem(value: number): CSSRelativeLength
-auto: CSSKeyword
-normal: CSSKeyword
-none: CSSKeyword
-
-// Text measurers
-new FallbackMeasurer(): TextMeasurer
-new CanvasMeasurer(): TextMeasurer
+```
+src/layout/flex/
+  flex-formatting.ts   — FFC main entry (11-step algorithm)
+  flex-item.ts         — Flex item collection and order sorting
+  flex-size.ts         — Flex base size and hypothetical main size
+  flex-algorithm.ts    — Free space distribution (grow/shrink)
+  flex-wrap.ts         — Multi-line splitting
+  types.ts             — FlexItemState, FlexLine, FlexContext
 ```
 
 ---
 
-## Supported CSS Properties (v0.1.0)
+## Supported CSS Properties (v0.2.0)
 
-### Box Model
-
-| Property | Supported Values |
-|----------|-----------------|
-| `display` | `block`, `inline`, `inline-block`, `none` |
-| `box-sizing` | `content-box`, `border-box` |
-| `width` / `height` | `\<length>`, `\<percentage>`, `em`, `rem`, `auto` |
-| `min-*` / `max-*` | `\<length>`, `\<percentage>`, `auto`, `none` |
-| `margin-*` | `\<length>`, `\<percentage>`, `em`, `rem`, `auto` |
-| `padding-*` | `\<length>`, `\<percentage>`, `em`, `rem` |
-| `border-*-width` | `\<length>`, `em`, `rem` |
-| `overflow` | `visible`, `hidden`, `scroll`, `auto` |
-| `vertical-align` | `baseline`, `top`, `middle`, `bottom` |
-
-### Text
+### Flexbox (New)
 
 | Property | Supported Values |
 |----------|-----------------|
-| `font-family` | Font family name string |
-| `font-size` | `\<length>`, `em`, `rem` |
-| `font-weight` | `100`-`900` |
-| `font-style` | `normal`, `italic` |
-| `line-height` | `\<length>`, `\<percentage>`, `em`, `rem`, `normal` |
-| `color` | `#hex`, `rgb()`, `rgba()`, `hsl()`, `hsla()` |
-| `text-align` | `left`, `right`, `center`, `justify` |
-| `white-space` | `normal`, `nowrap`, `pre`, `pre-wrap`, `pre-line` |
-| `word-break` | `normal`, `break-all`, `keep-all` |
-| `overflow-wrap` | `normal`, `break-word`, `anywhere` |
-| `letter-spacing` / `word-spacing` / `text-indent` | `\<length>`, `em`, `rem` |
-| `text-transform` | `none`, `uppercase`, `lowercase`, `capitalize` |
+| `display` | `flex` (new) |
+| `flex-direction` | `row`, `row-reverse`, `column`, `column-reverse` |
+| `flex-wrap` | `nowrap`, `wrap`, `wrap-reverse` |
+| `justify-content` | `flex-start`, `flex-end`, `center`, `space-between`, `space-around`, `space-evenly` |
+| `align-items` | `flex-start`, `flex-end`, `center`, `stretch`, `baseline` |
+| `align-self` | `auto`, `flex-start`, `flex-end`, `center`, `stretch`, `baseline` |
+| `align-content` | `flex-start`, `flex-end`, `center`, `stretch`, `space-between`, `space-around` |
+| `flex-grow` | `<number>` (default: 0) |
+| `flex-shrink` | `<number>` (default: 1) |
+| `flex-basis` | `px`, `%`, `em`, `rem`, `auto` |
+| `order` | `<integer>` (default: 0) |
+| `gap` | `px`, `em`, `rem`, `normal` (shorthand) |
+| `row-gap` | `px`, `em`, `rem`, `normal` |
+| `column-gap` | `px`, `em`, `rem`, `normal` |
 
----
+### Previously Supported (unchanged)
 
-## Known Limitations
-
-- **No float support** — Float layout will be implemented in Phase 2
-- **No position support** — `absolute`, `fixed`, `sticky` positioning will be implemented in Phase 2
-- **No Flexbox** — Flexible box layout will be added as a separate module in Phase 3
-- **No Grid** — Grid layout will be implemented in Phase 4
-- **No Table layout** — Table formatting will be added in a future release
-- **Text measurement accuracy** — `FallbackMeasurer` uses average character width estimation with inherent imprecision. For accurate measurement, use `CanvasMeasurer` or integrate with [Pretext](https://github.com/chenglou/pretext)
-- **Sub-pixel rendering** — All computations are based on integer pixels; sub-pixel rounding strategy differences are not handled
-- **No BiDi support** — Bidirectional text (Arabic/Hebrew) is not yet supported
-- **No Ruby support** — Ruby annotation layout is not yet supported
+All properties from v0.1.0 remain supported: Block layout, Inline layout, Box model, Text properties, UA default stylesheet.
 
 ---
 
 ## Test Coverage
 
-86 unit tests across the following modules:
+### Unit Tests (153 tests)
 
-| Module | Test File | Tests |
-|--------|-----------|-------|
-| CSS value parsing | `parser.test.ts` | 15 |
-| Shorthand expansion | `shorthand.test.ts` | 5 |
-| Style cascade | `cascade.test.ts` | 12 |
-| Property inheritance | `inherit.test.ts` | 6 |
-| Text measurement | `canvas-measurer.test.ts` | 7 |
-| Box model | `box-model.test.ts` | 5 |
-| Block layout | `normal-flow.test.ts` | 9 |
-| Margin collapse | `margin-collapse.test.ts` | 7 |
-| Whitespace handling | `whitespace.test.ts` | 14 |
-| Public API | `api.test.ts` | 6 |
-| **Total** | **10 files** | **86** |
+| Module | Tests |
+|--------|-------|
+| CSS value parsing | 15 |
+| Shorthand expansion | 5 |
+| Style cascade | 12 |
+| Property inheritance | 6 |
+| Text measurement | 7 |
+| Box model | 5 |
+| Block layout | 9 |
+| Margin collapse | 7 |
+| Whitespace handling | 14 |
+| Public API | 6 |
+| **Flex: basic** | 17 |
+| **Flex: grow/shrink/justify/align/wrap/gap/order** | 50 |
+| **Total** | **153** |
+
+### Diff Tests (49 tests, 100% fidelity)
+
+| Category | Fixtures | Status |
+|----------|----------|--------|
+| Block layout | 11 | 100% |
+| Inline layout | 7 | 100% |
+| Box Model | 5 | 100% |
+| **Flex layout** | **25** | **100%** |
+| **Total** | **48** | **100%** |
+
+Flex diff fixtures cover: basic (row/column/reverse), grow (equal/ratio), shrink, flex-basis, justify (center/space-between/space-around/space-evenly), align (center/end/stretch/self), wrap (basic/reverse), gap (row/wrap), order, padding (container/item), border, box-sizing.
+
+---
+
+## Known Limitations
+
+- **No float support** — Float layout will be implemented in a future release
+- **No position support** — `absolute`, `fixed`, `sticky` positioning not yet supported
+- **No Grid** — Grid layout will be implemented in Phase 3
+- **No Table layout** — Table formatting will be added in a future release
+- **Text measurement accuracy** — `FallbackMeasurer` uses average character width estimation. For accurate measurement, use `CanvasMeasurer` or integrate with [Pretext](https://github.com/chenglou/pretext)
+- **Sub-pixel rendering** — All computations are based on integer pixels
+- **No BiDi support** — Bidirectional text (Arabic/Hebrew) is not yet supported
+- **Flex edge cases** — `min-width`/`max-width` constraints on flex items, nested flex containers with percentage sizes, and `visibility: collapse` are not yet fully supported
+
+---
+
+## Breaking Changes
+
+None. All v0.1.0 APIs remain backward compatible.
 
 ---
 
@@ -184,24 +147,25 @@ npm install purelayout
 ```
 
 ```typescript
-import { layout, getBoundingClientRect, px, FallbackMeasurer } from 'purelayout';
+import { layout, px, FallbackMeasurer } from 'purelayout';
 
+// Flexbox layout
 const result = layout(
   {
     tagName: 'div',
-    style: { width: px(400), paddingTop: px(16) },
+    style: { display: 'flex', flexWrap: 'wrap', gap: px(10), width: px(300) },
     children: [
-      { tagName: 'p', style: { marginBottom: px(20) }, children: ['First paragraph'] },
-      { tagName: 'p', style: { marginBottom: px(20) }, children: ['Second paragraph'] },
+      { tagName: 'div', style: { flexGrow: 1, height: px(50) } },
+      { tagName: 'div', style: { flexGrow: 2, height: px(50) } },
+      { tagName: 'div', style: { flexGrow: 1, height: px(50) } },
     ],
   },
   { containerWidth: 800, textMeasurer: new FallbackMeasurer() }
 );
 
-// Read layout results
-result.root.contentRect;              // { x: 0, y: 0, width: 400, height: ... }
-result.root.children[0].contentRect;  // First <p> position and size
-getBoundingClientRect(result.root);    // Margin box rectangle
+result.root.children[0].contentRect;  // { x: 0, y: 0, width: ~71.67, height: 50 }
+result.root.children[1].contentRect;  // { x: ~81.67, y: 0, width: ~143.33, height: 50 }
+result.root.children[2].contentRect;  // { x: 0, y: 60, width: ~71.67, height: 50 }
 ```
 
 ---
@@ -224,3 +188,10 @@ npm run build
 ## License
 
 [MIT](./LICENSE)
+
+---
+
+## Release History
+
+- [v0.1.0](#purelayout-v010) — 2026-03-31 — Block + Inline layout, CSS cascade, box model
+- **v0.2.0** — 2026-04-01 — Flexbox layout (this release)

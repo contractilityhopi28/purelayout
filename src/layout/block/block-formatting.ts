@@ -9,6 +9,7 @@ import { collapseMargins } from './margin-collapse.js';
 import { resolveLength } from '../../css/cascade.js';
 import { isBlockLevel } from './block-level.js';
 import { layoutInlineRun } from '../inline/inline-formatting.js';
+import { layoutFlexFormattingContext } from '../flex/flex-formatting.js';
 import { processWhitespace } from '../inline/whitespace.js';
 
 /**
@@ -96,7 +97,11 @@ export function layoutBlockFormattingContext(
       pendingMarginTop = collapseMargins(pendingMarginTop, childMarginTop);
 
       // 递归布局（会计算 child.boxModel.marginLeft，包括 auto margin 居中）
-      layoutBlockFormattingContext(child, childContainingBlock, options);
+      if (child.type === 'flex') {
+        layoutFlexFormattingContext(child, childContainingBlock, options);
+      } else {
+        layoutBlockFormattingContext(child, childContainingBlock, options);
+      }
 
       // 检查是否是"自折叠"元素（无内容、无 padding、无 border、无 inline 内容）
       const isSelfCollapsing = child.contentRect.height === 0

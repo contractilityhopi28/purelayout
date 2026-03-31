@@ -1,0 +1,26 @@
+{
+  "fixture": "diff/fixtures/flex/box-sizing-border-box.html",
+  "container": {
+    "width": 800
+  },
+  "elements": [
+    {
+      "selector": "[data-test-id=\"container\"]",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 400,
+        "height": 100
+      }
+    },
+    {
+      "selector": "[data-test-id=\"item1\"]",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 200,
+        "height": 50
+      }
+    }
+  ]
+}

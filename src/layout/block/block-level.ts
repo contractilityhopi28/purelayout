@@ -10,12 +10,12 @@ export function isBlockLevel(node: LayoutNode): boolean {
   // 文本节点永远不是 block-level
   if (node.type === 'text') return false;
   const display = node.computedStyle?.boxModel.display ?? 'inline';
-  return display === 'block' || display === 'inline-block';
+  return display === 'block' || display === 'inline-block' || display === 'flex';
 }
 
 /**
  * 判断 display 值是否是 block-level
  */
 export function isBlockLevelDisplay(display: string): boolean {
-  return display === 'block' || display === 'inline-block';
+  return display === 'block' || display === 'inline-block' || display === 'flex';
 }

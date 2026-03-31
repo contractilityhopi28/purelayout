@@ -1,0 +1,35 @@
+{
+  "fixture": "diff/fixtures/flex/grow-ratio.html",
+  "container": {
+    "width": 800
+  },
+  "elements": [
+    {
+      "selector": "[data-test-id=\"container\"]",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 400,
+        "height": 50
+      }
+    },
+    {
+      "selector": "[data-test-id=\"item1\"]",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 133.33,
+        "height": 50
+      }
+    },
+    {
+      "selector": "[data-test-id=\"item2\"]",
+      "rect": {
+        "x": 133.33,
+        "y": 0,
+        "width": 266.67,
+        "height": 50
+      }
+    }
+  ]
+}

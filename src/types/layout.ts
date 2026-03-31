@@ -28,7 +28,7 @@ export interface LineBox {
 
 // ===== 布局节点 =====
 
-export type LayoutNodeType = 'block' | 'inline' | 'anonymous-block' | 'text';
+export type LayoutNodeType = 'block' | 'inline' | 'anonymous-block' | 'text' | 'flex';
 
 export interface LayoutNode {
   sourceIndex: number;

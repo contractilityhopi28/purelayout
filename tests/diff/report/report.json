@@ -1,11 +1,11 @@
 {
-  "generated": "2026-03-31T14:55:31.380Z",
+  "generated": "2026-03-31T16:32:05.471Z",
   "summary": {
-    "totalFixtures": 23,
-    "passedFixtures": 23,
+    "totalFixtures": 48,
+    "passedFixtures": 48,
     "failedFixtures": 0,
-    "totalComparisons": 188,
-    "passedComparisons": 188,
+    "totalComparisons": 476,
+    "passedComparisons": 476,
     "failedComparisons": 0,
     "fidelity": 100
   },
@@ -145,6 +145,131 @@
     },
     {
       "fixture": "diff/fixtures/box-model/padding-percentage.html",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "fixture": "diff/fixtures/flex/align-center.html",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "fixture": "diff/fixtures/flex/align-end.html",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "fixture": "diff/fixtures/flex/align-self.html",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "fixture": "diff/fixtures/flex/align-stretch.html",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "fixture": "diff/fixtures/flex/basic-column.html",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "fixture": "diff/fixtures/flex/basic-row.html",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "fixture": "diff/fixtures/flex/border-item.html",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "fixture": "diff/fixtures/flex/box-sizing-border-box.html",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "fixture": "diff/fixtures/flex/column-reverse.html",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "fixture": "diff/fixtures/flex/flex-basis.html",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "fixture": "diff/fixtures/flex/gap-row.html",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "fixture": "diff/fixtures/flex/gap-wrap.html",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "fixture": "diff/fixtures/flex/grow-equal.html",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "fixture": "diff/fixtures/flex/grow-ratio.html",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "fixture": "diff/fixtures/flex/justify-center.html",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "fixture": "diff/fixtures/flex/justify-space-around.html",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "fixture": "diff/fixtures/flex/justify-space-between.html",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "fixture": "diff/fixtures/flex/justify-space-evenly.html",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "fixture": "diff/fixtures/flex/order.html",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "fixture": "diff/fixtures/flex/padding-container.html",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "fixture": "diff/fixtures/flex/padding-item.html",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "fixture": "diff/fixtures/flex/row-reverse.html",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "fixture": "diff/fixtures/flex/shrink.html",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "fixture": "diff/fixtures/flex/wrap-basic.html",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "fixture": "diff/fixtures/flex/wrap-reverse.html",
       "passed": true,
       "failures": []
     }

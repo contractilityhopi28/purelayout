@@ -9,6 +9,7 @@ import { resolveWidth, resolveHorizontalMargins } from './resolver/width-resolve
 import { resolveHeight } from './resolver/height-resolver.js';
 import { determineContainingBlock } from './containing-block.js';
 import { layoutBlockFormattingContext } from './block/block-formatting.js';
+import { layoutFlexFormattingContext } from './flex/flex-formatting.js';
 import { establishesBFC } from './block/bfc.js';
 import { canCollapseParentChildMarginTop } from './block/margin-collapse.js';
 import { resolveLength } from '../css/cascade.js';
@@ -38,7 +39,12 @@ export function layout(root: StyleNode, options: LayoutOptions): LayoutTree {
   rootLayout.contentRect.x = 0;
   rootLayout.contentRect.y = 0;
 
-  layoutBlockFormattingContext(rootLayout, containingBlock, options);
+  // 根据节点类型分发布局
+  if (rootLayout.type === 'flex') {
+    layoutFlexFormattingContext(rootLayout, containingBlock, options);
+  } else {
+    layoutBlockFormattingContext(rootLayout, containingBlock, options);
+  }
 
   // layoutBlockFormattingContext 不会修改自身的 contentRect.x/y
   // 需要在之后设置正确的位置
@@ -74,11 +80,13 @@ function buildLayoutTree(
 ): LayoutNode {
   const computedStyle = computeStyle(node, parentComputed, options.rootFontSize);
   const sourceIndex = assignSourceIndex();
-  const isBlock = computedStyle.boxModel.display === 'block' || computedStyle.boxModel.display === 'inline-block';
+  const display = computedStyle.boxModel.display;
+  const isFlex = display === 'flex';
+  const isBlock = display === 'block' || display === 'inline-block' || isFlex;
 
   const layoutNode: LayoutNode = {
     sourceIndex,
-    type: isBlock ? 'block' : 'inline',
+    type: isFlex ? 'flex' : (isBlock ? 'block' : 'inline'),
     tagName: node.tagName,
     testId: (node.style as Record<string, unknown>)['dataTestId'] as string | undefined,
     computedStyle,

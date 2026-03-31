@@ -1,0 +1,35 @@
+{
+  "fixture": "diff/fixtures/flex/wrap-reverse.html",
+  "container": {
+    "width": 800
+  },
+  "elements": [
+    {
+      "selector": "[data-test-id=\"container\"]",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 200,
+        "height": 200
+      }
+    },
+    {
+      "selector": "[data-test-id=\"item1\"]",
+      "rect": {
+        "x": 0,
+        "y": 170,
+        "width": 150,
+        "height": 30
+      }
+    },
+    {
+      "selector": "[data-test-id=\"item2\"]",
+      "rect": {
+        "x": 0,
+        "y": 130,
+        "width": 150,
+        "height": 40
+      }
+    }
+  ]
+}

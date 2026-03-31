@@ -25,6 +25,7 @@ export type {
   ComputedStyle,
   InheritedStyle,
   BoxModelStyle,
+  FlexStyle,
   DisplayValue,
   OverflowValue,
   BoxSizingValue,
@@ -33,6 +34,12 @@ export type {
   WhiteSpaceValue,
   TextAlignValue,
   VerticalAlignValue,
+  FlexDirectionValue,
+  FlexWrapValue,
+  JustifyContentValue,
+  AlignItemsValue,
+  AlignContentValue,
+  AlignSelfValue,
 } from './types/style.js';
 
 export type {
@@ -59,4 +66,4 @@ export { FallbackMeasurer } from './text/fallback-measurer.js';
 export { CanvasMeasurer } from './text/canvas-measurer.js';
 
 // 工具函数导出
-export { px, pct, em, rem, auto, normal, none } from './utils/format.js';
+export { px, pct, em, rem, auto, normal, none, keyword } from './utils/format.js';

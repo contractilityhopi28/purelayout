@@ -1,0 +1,26 @@
+{
+  "fixture": "diff/fixtures/flex/padding-container.html",
+  "container": {
+    "width": 800
+  },
+  "elements": [
+    {
+      "selector": "[data-test-id=\"container\"]",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 440,
+        "height": 140
+      }
+    },
+    {
+      "selector": "[data-test-id=\"item1\"]",
+      "rect": {
+        "x": 20,
+        "y": 20,
+        "width": 100,
+        "height": 50
+      }
+    }
+  ]
+}

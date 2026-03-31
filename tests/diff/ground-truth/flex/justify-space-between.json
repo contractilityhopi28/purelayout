@@ -1,0 +1,44 @@
+{
+  "fixture": "diff/fixtures/flex/justify-space-between.html",
+  "container": {
+    "width": 800
+  },
+  "elements": [
+    {
+      "selector": "[data-test-id=\"container\"]",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 300,
+        "height": 50
+      }
+    },
+    {
+      "selector": "[data-test-id=\"item1\"]",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 50,
+        "height": 30
+      }
+    },
+    {
+      "selector": "[data-test-id=\"item2\"]",
+      "rect": {
+        "x": 125,
+        "y": 0,
+        "width": 50,
+        "height": 30
+      }
+    },
+    {
+      "selector": "[data-test-id=\"item3\"]",
+      "rect": {
+        "x": 250,
+        "y": 0,
+        "width": 50,
+        "height": 30
+      }
+    }
+  ]
+}

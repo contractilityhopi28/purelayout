@@ -1,7 +1,7 @@
 /**
  * UA 样式表 — 浏览器默认样式
  */
-import type { BoxModelStyle, InheritedStyle } from '../types/style.js';
+import type { BoxModelStyle, InheritedStyle, FlexStyle } from '../types/style.js';
 import { px } from '../utils/format.js';
 
 /** 属性初始值 */
@@ -87,3 +87,20 @@ const UA_STYLESHEET: Record<string, Partial<BoxModelStyle & InheritedStyle>> = {
 export function getUADefaults(tagName: string): Partial<BoxModelStyle & InheritedStyle> {
   return UA_STYLESHEET[tagName.toLowerCase()] ?? {};
 }
+
+/** Flexbox 属性初始值 */
+export const INITIAL_FLEX: Required<FlexStyle> = {
+  flexDirection: 'row',
+  flexWrap: 'nowrap',
+  justifyContent: 'flex-start',
+  alignItems: 'stretch',
+  alignContent: 'stretch',
+  flexGrow: 0,
+  flexShrink: 1,
+  flexBasis: { type: 'keyword', value: 'auto' },
+  alignSelf: 'auto',
+  order: 0,
+  gap: { type: 'keyword', value: 'normal' },
+  rowGap: { type: 'keyword', value: 'normal' },
+  columnGap: { type: 'keyword', value: 'normal' },
+};

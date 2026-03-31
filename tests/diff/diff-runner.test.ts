@@ -164,18 +164,27 @@ function parseStyleString(styleStr: string): Record<string, unknown> {
       }
     } else if (camelProp === 'boxSizing' || camelProp === 'display' || camelProp === 'overflow' ||
                camelProp === 'whiteSpace' || camelProp === 'wordBreak' || camelProp === 'overflowWrap' ||
-               camelProp === 'textAlign' || camelProp === 'verticalAlign' || camelProp === 'textTransform') {
+               camelProp === 'textAlign' || camelProp === 'verticalAlign' || camelProp === 'textTransform' ||
+               camelProp === 'flexDirection' || camelProp === 'flexWrap' || camelProp === 'justifyContent' ||
+               camelProp === 'alignItems' || camelProp === 'alignSelf' || camelProp === 'alignContent') {
       // 枚举类型属性：直接使用字符串值
       const enumValues = new Set([
-        'border-box', 'content-box', 'block', 'inline', 'inline-block', 'none',
+        'border-box', 'content-box', 'block', 'inline', 'inline-block', 'none', 'flex',
         'hidden', 'visible', 'scroll', 'auto', 'normal', 'nowrap', 'pre',
-        'pre-wrap', 'pre-line', 'break-all', 'break-word', 'keep-all',
+        'pre-wrap', 'pre-line', 'break-all', 'break-word', 'keep-all', 'anywhere',
         'left', 'right', 'center', 'justify', 'top', 'middle', 'bottom',
         'baseline', 'uppercase', 'lowercase', 'capitalize',
+        'row', 'row-reverse', 'column', 'column-reverse',
+        'wrap', 'wrap-reverse',
+        'flex-start', 'flex-end', 'space-between', 'space-around', 'space-evenly',
+        'stretch',
       ]);
       if (enumValues.has(value)) {
         style[camelProp] = value;
       }
+    } else if (camelProp === 'flexGrow' || camelProp === 'flexShrink' || camelProp === 'order') {
+      // 数值类型 flexbox 属性
+      style[camelProp] = parseFloat(value);
     } else {
       try {
         style[camelProp] = parseCSSValue(value);
@@ -219,7 +228,7 @@ function runSingleDiff(fixtureRelPath: string): DiffResult {
 
 function loadAllGroundTruths(): string[] {
   const files: string[] = [];
-  const dirs = ['block', 'inline', 'box-model'];
+  const dirs = ['block', 'inline', 'box-model', 'flex'];
 
   for (const dir of dirs) {
     const dirPath = path.join(GROUND_TRUTH_DIR, dir);
@@ -293,6 +302,26 @@ describe('Diff: Box model', () => {
   }
 });
 
+describe('Diff: Flex layout', () => {
+  const flexFixtures = allGroundTruths.filter(f => f.startsWith('flex/'));
+
+  for (const fixture of flexFixtures) {
+    it(fixture, () => {
+      const result = runSingleDiff(fixture);
+
+      if (!result.passed) {
+        const failures = result.comparisons.filter(c => !c.passed);
+        const details = failures.map(f =>
+          `  ${f.selector} ${f.property}: expected=${f.expected}, actual=${f.actual}, diff=${f.diff.toFixed(2)} (tolerance=${f.tolerance})`
+        ).join('\n');
+        expect.fail(`${fixture} 有 ${failures.length} 项超出容差:\n${details}`);
+      }
+
+      expect(result.comparisons.length).toBeGreaterThan(0);
+    });
+  }
+});
+
 describe('Diff: Overall fidelity report', () => {
   it('should generate fidelity report with all formats', () => {
     const allResults: DiffResult[] = [];
@@ -317,6 +346,7 @@ describe('Diff: Overall fidelity report', () => {
       { name: 'Block', pattern: '/block/' },
       { name: 'Inline', pattern: '/inline/' },
       { name: 'BoxModel', pattern: '/box-model/' },
+      { name: 'Flex', pattern: '/flex/' },
     ];
     for (const cat of categories) {
       const catResults = allResults.filter(r => r.fixture.includes(cat.pattern));

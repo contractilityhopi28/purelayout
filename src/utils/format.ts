@@ -31,3 +31,8 @@ export const normal: CSSKeyword = { type: 'keyword', value: 'normal' };
 
 /** none 关键字 */
 export const none: CSSKeyword = { type: 'keyword', value: 'none' };
+
+/** 创建任意关键字值 */
+export function keyword(value: string): CSSKeyword {
+  return { type: 'keyword', value };
+}

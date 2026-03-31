@@ -9,7 +9,7 @@
   <img src="https://img.shields.io/npm/v/purelayout" alt="npm version" />
   <img src="https://img.shields.io/npm/l/purelayout" alt="license" />
   <img src="https://img.shields.io/badge/TypeScript-5.7-blue" alt="TypeScript" />
-  <img src="https://img.shields.io/badge/tests-110%20passed-brightgreen" alt="tests" />
+  <img src="https://img.shields.io/badge/tests-202%20passed-brightgreen" alt="tests" />
   <img src="https://img.shields.io/badge/fidelity-100%25-brightgreen" alt="fidelity" />
   <img src="https://img.shields.io/badge/zero%20dependencies-success" alt="zero deps" />
 </p>
@@ -18,7 +18,7 @@
 
 ## 这是什么
 
-PureLayout 把浏览器的 **CSS Block + Inline 布局能力**从浏览器中拆出来，变成一个独立的 TypeScript 库。类比 [Pretext](https://github.com/chenglou/pretext) 把文本测量从 DOM 中拆出来的思路。
+PureLayout 把浏览器的 **CSS Block + Inline + Flexbox 布局能力**从浏览器中拆出来，变成一个独立的 TypeScript 库。类比 [Pretext](https://github.com/chenglou/pretext) 把文本测量从 DOM 中拆出来的思路。
 
 你可以在 **SSR、Web Worker、Canvas、PDF 生成、服务端渲染** 等任何有 JS 运行时的环境中精确计算 CSS 布局。
 
@@ -30,13 +30,14 @@ Pretext（文本测量） + PureLayout（布局计算） = 完整的无浏览器
 
 - **零运行时依赖** — 纯 TypeScript 实现，不依赖任何浏览器 API
 - **Block 布局** — BFC、normal flow、margin collapse、clearance
+- **Flexbox 布局** — 完整 Flex Formatting Context，支持 grow/shrink/wrap/对齐
 - **Inline 布局** — line box 构建、文本排列、软换行
 - **CSS 级联** — 完整的样式级联、继承、UA 默认值
 - **盒模型** — margin/padding/border/box-sizing 完整支持
 - **文本测量抽象** — 可插拔的 TextMeasurer 接口，支持 Canvas 和 Fallback 两种实现
 - **多环境运行** — Node.js / Browser / Worker 通用
 - **双格式输出** — ESM + CJS，完整 TypeScript 类型声明
-- **体积小** — 核心代码仅 ~66KB（含 source map）
+- **体积小** — 核心代码仅 ~69KB
 
 ## 安装
 
@@ -145,7 +146,7 @@ interface LayoutNode {
 
 | 属性 | 支持的值 |
 |------|---------|
-| `display` | `block`, `inline`, `inline-block`, `none` |
+| `display` | `block`, `inline`, `inline-block`, `flex`, `none` |
 | `box-sizing` | `content-box`, `border-box` |
 | `width` / `height` | `px`, `%`, `em`, `rem`, `auto` |
 | `min-width` / `max-width` | `px`, `%`, `auto`, `none` |
@@ -154,6 +155,22 @@ interface LayoutNode {
 | `padding-*` | `px`, `%`, `em`, `rem` |
 | `border-*-width` | `px`, `em`, `rem` |
 | `overflow` | `visible`, `hidden`, `scroll`, `auto` |
+
+### Flexbox
+
+| 属性 | 支持的值 |
+|------|---------|
+| `flex-direction` | `row`, `row-reverse`, `column`, `column-reverse` |
+| `flex-wrap` | `nowrap`, `wrap`, `wrap-reverse` |
+| `justify-content` | `flex-start`, `flex-end`, `center`, `space-between`, `space-around`, `space-evenly` |
+| `align-items` | `flex-start`, `flex-end`, `center`, `stretch`, `baseline` |
+| `align-self` | `auto`, `flex-start`, `flex-end`, `center`, `stretch`, `baseline` |
+| `align-content` | `flex-start`, `flex-end`, `center`, `stretch`, `space-between`, `space-around` |
+| `flex-grow` | `<number>` (default: 0) |
+| `flex-shrink` | `<number>` (default: 1) |
+| `flex-basis` | `px`, `%`, `em`, `rem`, `auto` |
+| `order` | `<integer>` (default: 0) |
+| `gap` / `row-gap` / `column-gap` | `px`, `em`, `rem`, `normal` |
 
 ### 文本
 
@@ -189,6 +206,18 @@ interface LayoutNode {
 - **Margin Collapse**：兄弟/父子 margin 折叠，正值取 max、负值取 min、混合相加
 - **Clearance**：预留接口（Phase 2 float 支持）
 
+### Flexbox 布局
+
+- **Flex Formatting Context (FFC)**：完整的 11 步 Flex 布局算法
+- **Flex 方向**：`row`、`column`、`row-reverse`、`column-reverse`
+- **Flex wrap**：`nowrap`（默认）、`wrap`、`wrap-reverse`（多行拆分 + 交叉轴反转）
+- **主轴对齐**：`justify-content` 6 种模式
+- **交叉轴对齐**：`align-items` + `align-self`，支持 `stretch` 自动拉伸
+- **多行对齐**：`align-content` 6 种模式，含 `stretch` 行高拉伸
+- **弹性尺寸**：`flex-grow` / `flex-shrink` / `flex-basis` 空间分配算法
+- **排序**：`order` 属性重排 flex items
+- **间距**：`gap` 简写 + `row-gap` / `column-gap` 独立控制
+
 ### Inline 布局
 
 - **Line Box**：基于 font metrics (ascent/descent) 构建行框
@@ -206,9 +235,10 @@ interface LayoutNode {
 | Block 布局 | 11 | 11 | 100% |
 | Inline 布局 | 7 | 7 | 100% |
 | Box Model | 5 | 5 | 100% |
-| **合计** | **23** | **23** | **100%** |
+| Flex 布局 | 25 | 25 | 100% |
+| **合计** | **48** | **48** | **100%** |
 
-188 项对比（x/y/width/height），容差 8px（覆盖 FallbackMeasurer 字符宽度估算误差）。
+336 项对比（x/y/width/height），容差 8px（覆盖 FallbackMeasurer 字符宽度估算误差）。
 
 ### 覆盖场景
 
@@ -217,6 +247,8 @@ interface LayoutNode {
 **Inline:** basic-text, cjk-text, multi-line-text, mixed-block-inline, whitespace (normal/nowrap/pre)
 
 **Box Model:** auto-margin-center, box-sizing (border-box/content-box), nested-padding, padding-percentage
+
+**Flex:** basic (row/column/reverse), grow (equal/ratio), shrink, flex-basis, justify (center/space-between/space-around/space-evenly), align (center/end/stretch/self), wrap (basic/reverse), gap (row/wrap), order, padding (container/item), border, box-sizing
 
 ### 运行
 
@@ -271,20 +303,27 @@ purelayout/
 │   │   │   ├── line-box.ts
 │   │   │   ├── line-break.ts
 │   │   │   └── whitespace.ts
+│   │   ├── flex/           # Flexbox 布局
+│   │   │   ├── flex-formatting.ts  # FFC 主入口
+│   │   │   ├── flex-item.ts        # Item 收集与排序
+│   │   │   ├── flex-size.ts        # Flex base size 计算
+│   │   │   ├── flex-algorithm.ts   # Grow/shrink 空间分配
+│   │   │   ├── flex-wrap.ts        # 多行拆分
+│   │   │   └── types.ts            # Flex 内部类型
 │   │   └── resolver/       # 尺寸解析
 │   ├── text/               # 文本测量
 │   │   ├── measurer.ts     # 基础测量逻辑
 │   │   ├── fallback-measurer.ts
 │   │   └── canvas-measurer.ts
 │   └── utils/format.ts     # 便捷工厂函数
-├── tests/                  # 110 个测试（86 单元 + 24 差分）
+├── tests/                  # 202 个测试（153 单元 + 49 差分）
 │   ├── unit/               # 单元测试
 │   └── diff/               # 差分测试
 │       ├── capture.ts      # Playwright Ground Truth 采集
 │       ├── comparator.ts   # 结果比较器
 │       ├── reporter.ts     # 报告生成器 (text/json/html)
-│       ├── fixtures/       # HTML 测试固件 (23 个)
-│       ├── ground-truth/   # 浏览器基准数据 (23 个)
+│       ├── fixtures/       # HTML 测试固件 (48 个)
+│       ├── ground-truth/   # 浏览器基准数据 (48 个)
 │       └── report/         # 生成的报告
 └── dist/                   # 构建输出 (ESM + CJS + DTS)
 ```
@@ -313,7 +352,7 @@ npm test
 
 ## 路线图
 
-### Phase 1 — Block + Inline (当前)
+### Phase 1 — Block + Inline
 
 - [x] CSS 值解析 (px/%/em/rem/auto/keyword/color)
 - [x] 样式级联与继承
@@ -326,13 +365,16 @@ npm test
 - [x] 文本测量抽象 (Fallback + Canvas)
 - [x] 差分测试框架 (Playwright ground truth 对比)
 
-### Phase 2 — Flexbox
+### Phase 2 — Flexbox (当前)
 
-- [ ] Flex 方向 (row, column, row-reverse, column-reverse)
-- [ ] Flex wrap
-- [ ] justify-content / align-items / align-content
-- [ ] flex-grow / flex-shrink / flex-basis
-- [ ] gap
+- [x] Flex 方向 (row, column, row-reverse, column-reverse)
+- [x] Flex wrap (wrap, wrap-reverse)
+- [x] justify-content (6 种模式)
+- [x] align-items / align-self / align-content
+- [x] flex-grow / flex-shrink / flex-basis
+- [x] gap / row-gap / column-gap
+- [x] order 排序
+- [x] box-sizing: border-box 在 flex items 中
 
 ### Phase 3 — Grid
 
@@ -367,7 +409,7 @@ npm test
 
 | 维度 | [Yoga (Meta)](https://github.com/facebook/yoga) | PureLayout |
 |------|------|------------|
-| 布局模型 | 仅 Flexbox | Block + Inline |
+| 布局模型 | 仅 Flexbox | Block + Inline + Flexbox |
 | CSS 解析 | 不解析 CSS，手动设置属性 | 支持级联、继承、默认值 |
 | 实现语言 | C++ 主体，JS 绑定 | 纯 TypeScript |
 | 文本处理 | 不处理文本 | 内置文本测量接口 |

@@ -21,10 +21,13 @@ const KEYWORDS = new Set([
   'left', 'right', 'center', 'justify',
   'baseline', 'top', 'middle', 'bottom',
   'break-all', 'keep-all', 'break-word', 'anywhere',
-  'nowrap', 'pre', 'pre-wrap', 'pre-line',
+  'nowrap', 'pre', 'pre-wrap', 'pre-line', 'wrap', 'wrap-reverse',
   'uppercase', 'lowercase', 'capitalize',
   'solid', 'dashed', 'dotted',
   'currentcolor',
+  'row', 'row-reverse', 'column', 'column-reverse',
+  'flex-start', 'flex-end', 'space-between', 'space-around', 'space-evenly',
+  'stretch',
 ]);
 
 /**
