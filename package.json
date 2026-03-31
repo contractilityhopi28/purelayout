@@ -1,7 +1,12 @@
 {
   "name": "purelayout",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Pure JavaScript/TypeScript CSS layout engine — no browser DOM required",
+  "author": "peterfei",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:peterfei/purelayout.git"
+  },
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
