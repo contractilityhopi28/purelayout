@@ -320,4 +320,4 @@ npm test
 
 ## 许可证
 
-MIT
+[MIT License](./LICENSE) / [MIT 许可证](./LICENSE.zh-CN)

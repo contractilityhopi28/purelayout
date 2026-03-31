@@ -1,98 +1,98 @@
 # PureLayout v0.1.0
 
-> 发布日期：2026-03-31
+> Released: 2026-03-31
 >
-> 纯 JavaScript/TypeScript CSS Block + Inline 布局计算引擎首个正式版本。
+> First stable release of the pure JavaScript/TypeScript CSS Block + Inline layout engine.
 
 ---
 
-## 概述
+## Overview
 
-PureLayout v0.1.0 实现了 CSS 正常流布局（Normal Flow）的核心子集，包括 Block 布局和 Inline 布局。该版本可以在不依赖浏览器 DOM 的前提下，精确计算元素的尺寸和位置，适用于服务端渲染、PDF 生成、Canvas 绘图等场景。
+PureLayout v0.1.0 implements the core subset of CSS Normal Flow layout, including Block and Inline formatting contexts. It computes element sizes and positions without any browser DOM dependency, making it suitable for server-side rendering, PDF generation, Canvas drawing, and other non-browser environments.
 
-**核心数字：**
+**Key numbers:**
 
-- 30 个源文件，约 1,500 行 TypeScript 代码
-- 86 个单元测试，100% 通过
-- 零运行时依赖
-- ESM + CJS 双格式输出，完整 TypeScript 类型声明
-
----
-
-## 新功能
-
-### CSS 解析引擎
-
-完整的 CSS 值解析与级联系统：
-
-- **值解析器** — 支持 `px`、`%`、`em`、`rem`、`auto`、`normal`、`none`、颜色值（`#hex`、`rgb()`、`rgba()`、`hsl()`）、`calc()` 表达式
-- **简写展开** — 1/2/3/4 值语法自动展开为四边值（`margin`、`padding` 等）
-- **样式级联** — 完整的优先级链：用户样式 > UA 默认值 > 父元素继承值 > 属性初始值
-- **相对值解析** — `em` 基于父元素 `font-size` 计算，`rem` 基于根 `font-size` 计算
-- **UA 样式表** — 内置 26 种 HTML 元素的浏览器默认样式（`div`、`p`、`h1`-`h6`、`span`、`ul`、`ol`、`pre` 等）
-
-### Block 布局
-
-CSS Block Formatting Context (BFC) 的完整实现：
-
-- **BFC 创建** — `overflow` 非 `visible`、`display: inline-block` 等条件触发
-- **Normal Flow** — block 元素垂直堆叠，`width: auto` 占满包含块宽度
-- **Margin Collapse** — 相邻兄弟 margin 折叠（正值取 max、负值取 min、一正一负相加）
-- **父子 Margin Collapse** — 父元素无 `border-top`/`padding-top` 时，首/末子元素 margin 与父元素折叠
-- **BFC 阻止折叠** — BFC 边界阻止内外 margin 互相折叠
-- **Clearance** — 预留接口（Phase 2 float 支持时启用）
-
-### Inline 布局
-
-CSS Inline Formatting Context (IFC) 的基础实现：
-
-- **Line Box 构建** — 基于 font metrics（ascent/descent）构建行框，计算行高和 baseline
-- **文本排列** — 内联元素和文本节点在同一行框内水平排列
-- **软换行** — CJK 字符间自然断点，`word-break` / `overflow-wrap` 控制换行策略
-- **空白处理** — 完整支持 `white-space` 属性的 5 种模式：
-
-  | 模式 | 空白合并 | 换行符 | 软换行 |
-  |------|---------|--------|--------|
-  | `normal` | 合并 | 忽略 | 允许 |
-  | `nowrap` | 合并 | 忽略 | 禁止 |
-  | `pre` | 保留 | 保留 | 禁止 |
-  | `pre-wrap` | 保留 | 保留 | 允许 |
-  | `pre-line` | 合并 | 保留 | 允许 |
-
-### 盒模型
-
-完整的 CSS 盒模型计算：
-
-- **margin** — 四边独立设置，支持 `auto`
-- **padding** — 四边独立设置，支持百分比
-- **border-width** — 四边独立设置
-- **box-sizing** — `content-box`（默认）和 `border-box` 模式
-- **min-width / max-width / min-height / max-height** — 尺寸约束
-- **水平 auto margin 居中** — `margin-left: auto` + `margin-right: auto` 平分剩余空间
-
-### 文本测量抽象
-
-可插拔的文本测量接口设计：
-
-- **`TextMeasurer` 接口** — 定义 `measureTextWidth()`、`getFontMetrics()`、`measureTextSegments()` 三个方法
-- **`FallbackMeasurer`** — 零依赖实现，基于字符平均宽度估算（英文 ~0.6em，CJK ~1.0em），适用于不需要精确文本测量的场景
-- **`CanvasMeasurer`** — 使用 Node.js `canvas` 包的 `measureText()`，提供更高精度。当 `canvas` 包不可用时自动降级为 Fallback
+- 30 source files, ~1,500 lines of TypeScript
+- 86 unit tests, all passing
+- Zero runtime dependencies
+- Dual-format output: ESM + CJS with full TypeScript type declarations
 
 ---
 
-## 公共 API
+## What's New
+
+### CSS Parsing Engine
+
+A complete CSS value parsing and cascade system:
+
+- **Value parser** — Supports `px`, `%`, `em`, `rem`, `auto`, `normal`, `none`, color values (`#hex`, `rgb()`, `rgba()`, `hsl()`), and `calc()` expressions
+- **Shorthand expansion** — 1/2/3/4-value syntax auto-expands to four edges (`margin`, `padding`, etc.)
+- **Style cascade** — Full priority chain: user styles > UA defaults > parent inheritance > initial values
+- **Relative value resolution** — `em` resolves against parent `font-size`, `rem` against root `font-size`
+- **UA stylesheet** — Built-in browser default styles for 26 HTML elements (`div`, `p`, `h1`-`h6`, `span`, `ul`, `ol`, `pre`, etc.)
+
+### Block Layout
+
+Full implementation of the CSS Block Formatting Context (BFC):
+
+- **BFC creation** — Triggered by `overflow` not `visible`, `display: inline-block`, and other conditions
+- **Normal flow** — Block elements stack vertically, `width: auto` fills the containing block
+- **Margin collapse** — Adjacent sibling margin collapsing (positive values take max, negative take min, mixed values add)
+- **Parent-child margin collapse** — First/last child margins collapse with parent when no `border-top`/`padding-top` barrier exists
+- **BFC boundary** — BFC boundaries prevent inside/outside margins from collapsing across them
+- **Clearance** — Interface reserved for Phase 2 (float support)
+
+### Inline Layout
+
+Basic implementation of the CSS Inline Formatting Context (IFC):
+
+- **Line box construction** — Builds line boxes based on font metrics (ascent/descent), computes line height and baseline
+- **Text placement** — Inline elements and text nodes arranged horizontally within line boxes
+- **Soft wrapping** — Natural break opportunities between CJK characters, controlled by `word-break` / `overflow-wrap`
+- **Whitespace handling** — Full support for all 5 modes of the `white-space` property:
+
+  | Mode | Collapse spaces | Preserve newlines | Soft wrap |
+  |------|----------------|-------------------|-----------|
+  | `normal` | Yes | No | Yes |
+  | `nowrap` | Yes | No | No |
+  | `pre` | No | Yes | No |
+  | `pre-wrap` | No | Yes | Yes |
+  | `pre-line` | Yes | Yes | Yes |
+
+### Box Model
+
+Complete CSS box model computation:
+
+- **margin** — Independent per-edge settings, supports `auto`
+- **padding** — Independent per-edge settings, supports percentages
+- **border-width** — Independent per-edge settings
+- **box-sizing** — Both `content-box` (default) and `border-box` modes
+- **min-width / max-width / min-height / max-height** — Size constraints
+- **Horizontal auto margin centering** — `margin-left: auto` + `margin-right: auto` splits remaining space equally
+
+### Text Measurement Abstraction
+
+Pluggable text measurement interface:
+
+- **`TextMeasurer` interface** — Defines `measureTextWidth()`, `getFontMetrics()`, and `measureTextSegments()` methods
+- **`FallbackMeasurer`** — Zero-dependency implementation based on average character width estimation (Latin ~0.6em, CJK ~1.0em). Suitable for scenarios that don't require precise text measurement
+- **`CanvasMeasurer`** — Uses Node.js `canvas` package's `measureText()` for higher precision. Automatically falls back to Fallback when the `canvas` package is unavailable
+
+---
+
+## Public API
 
 ```typescript
-// 布局计算
+// Layout computation
 layout(root: StyleNode, options: LayoutOptions): LayoutTree
 
-// 获取 margin box 矩形（类似 DOM getBoundingClientRect）
+// Get margin box rectangle (similar to DOM getBoundingClientRect)
 getBoundingClientRect(node: LayoutNode): BoundingClientRect
 
-// 按源索引查找节点
+// Find node by source index
 findNodeBySourceIndex(root: LayoutNode, sourceIndex: number): LayoutNode | null
 
-// CSS 值工厂函数
+// CSS value factory functions
 px(value: number): CSSLength
 pct(value: number): CSSPercentage
 em(value: number): CSSRelativeLength
@@ -101,19 +101,19 @@ auto: CSSKeyword
 normal: CSSKeyword
 none: CSSKeyword
 
-// 文本测量器
+// Text measurers
 new FallbackMeasurer(): TextMeasurer
 new CanvasMeasurer(): TextMeasurer
 ```
 
 ---
 
-## 支持的 CSS 属性（v0.1.0）
+## Supported CSS Properties (v0.1.0)
 
-### 盒模型属性
+### Box Model
 
-| 属性 | 支持的值 |
-|------|---------|
+| Property | Supported Values |
+|----------|-----------------|
 | `display` | `block`, `inline`, `inline-block`, `none` |
 | `box-sizing` | `content-box`, `border-box` |
 | `width` / `height` | `\<length>`, `\<percentage>`, `em`, `rem`, `auto` |
@@ -124,11 +124,11 @@ new CanvasMeasurer(): TextMeasurer
 | `overflow` | `visible`, `hidden`, `scroll`, `auto` |
 | `vertical-align` | `baseline`, `top`, `middle`, `bottom` |
 
-### 文本属性
+### Text
 
-| 属性 | 支持的值 |
-|------|---------|
-| `font-family` | 字体名称字符串 |
+| Property | Supported Values |
+|----------|-----------------|
+| `font-family` | Font family name string |
 | `font-size` | `\<length>`, `em`, `rem` |
 | `font-weight` | `100`-`900` |
 | `font-style` | `normal`, `italic` |
@@ -143,41 +143,41 @@ new CanvasMeasurer(): TextMeasurer
 
 ---
 
-## 已知限制
+## Known Limitations
 
-- **不支持 float** — 浮动布局将在 Phase 2 实现
-- **不支持 position** — `absolute`、`fixed`、`sticky` 定位将在 Phase 2 实现
-- **不支持 Flexbox** — 弹性布局将在 Phase 3 作为独立模块实现
-- **不支持 Grid** — 网格布局将在 Phase 4 实现
-- **不支持 Table** — 表格布局将在后续版本实现
-- **文本测量精度** — `FallbackMeasurer` 基于字符平均宽度估算，存在误差。需要精确测量请使用 `CanvasMeasurer` 或集成 [Pretext](https://github.com/chenglou/pretext)
-- **子像素渲染** — 当前版本所有计算基于整数像素，未处理亚像素舍入策略差异
-- **Bidi** — 双向文本（阿拉伯语/希伯来语）暂不支持
-- **Ruby** — Ruby 注释布局暂不支持
-
----
-
-## 测试覆盖
-
-86 个单元测试覆盖以下模块：
-
-| 模块 | 测试文件 | 测试数量 |
-|------|---------|---------|
-| CSS 值解析 | `parser.test.ts` | 15 |
-| 简写展开 | `shorthand.test.ts` | 5 |
-| 样式级联 | `cascade.test.ts` | 12 |
-| 继承属性 | `inherit.test.ts` | 6 |
-| 文本测量 | `canvas-measurer.test.ts` | 7 |
-| 盒模型 | `box-model.test.ts` | 5 |
-| Block 布局 | `normal-flow.test.ts` | 9 |
-| Margin Collapse | `margin-collapse.test.ts` | 7 |
-| 空白处理 | `whitespace.test.ts` | 14 |
-| 公共 API | `api.test.ts` | 6 |
-| **合计** | **10 文件** | **86** |
+- **No float support** — Float layout will be implemented in Phase 2
+- **No position support** — `absolute`, `fixed`, `sticky` positioning will be implemented in Phase 2
+- **No Flexbox** — Flexible box layout will be added as a separate module in Phase 3
+- **No Grid** — Grid layout will be implemented in Phase 4
+- **No Table layout** — Table formatting will be added in a future release
+- **Text measurement accuracy** — `FallbackMeasurer` uses average character width estimation with inherent imprecision. For accurate measurement, use `CanvasMeasurer` or integrate with [Pretext](https://github.com/chenglou/pretext)
+- **Sub-pixel rendering** — All computations are based on integer pixels; sub-pixel rounding strategy differences are not handled
+- **No BiDi support** — Bidirectional text (Arabic/Hebrew) is not yet supported
+- **No Ruby support** — Ruby annotation layout is not yet supported
 
 ---
 
-## 安装与使用
+## Test Coverage
+
+86 unit tests across the following modules:
+
+| Module | Test File | Tests |
+|--------|-----------|-------|
+| CSS value parsing | `parser.test.ts` | 15 |
+| Shorthand expansion | `shorthand.test.ts` | 5 |
+| Style cascade | `cascade.test.ts` | 12 |
+| Property inheritance | `inherit.test.ts` | 6 |
+| Text measurement | `canvas-measurer.test.ts` | 7 |
+| Box model | `box-model.test.ts` | 5 |
+| Block layout | `normal-flow.test.ts` | 9 |
+| Margin collapse | `margin-collapse.test.ts` | 7 |
+| Whitespace handling | `whitespace.test.ts` | 14 |
+| Public API | `api.test.ts` | 6 |
+| **Total** | **10 files** | **86** |
+
+---
+
+## Installation & Usage
 
 ```bash
 npm install purelayout
@@ -191,42 +191,36 @@ const result = layout(
     tagName: 'div',
     style: { width: px(400), paddingTop: px(16) },
     children: [
-      { tagName: 'p', style: { marginBottom: px(20) }, children: ['第一段'] },
-      { tagName: 'p', style: { marginBottom: px(20) }, children: ['第二段'] },
+      { tagName: 'p', style: { marginBottom: px(20) }, children: ['First paragraph'] },
+      { tagName: 'p', style: { marginBottom: px(20) }, children: ['Second paragraph'] },
     ],
   },
   { containerWidth: 800, textMeasurer: new FallbackMeasurer() }
 );
 
-// 读取布局结果
-result.root.contentRect;        // { x: 0, y: 0, width: 400, height: ... }
-result.root.children[0].contentRect;  // 第一个 <p> 的位置和尺寸
-getBoundingClientRect(result.root);    // margin box 矩形
+// Read layout results
+result.root.contentRect;              // { x: 0, y: 0, width: 400, height: ... }
+result.root.children[0].contentRect;  // First <p> position and size
+getBoundingClientRect(result.root);    // Margin box rectangle
 ```
 
 ---
 
-## 贡献
+## Contributing
 
-欢迎贡献代码、报告 Bug 或提出新功能建议。
+Contributions, bug reports, and feature requests are welcome.
 
 ```bash
-# 克隆仓库
-git clone https://github.com/your-username/purelayout.git
+git clone https://github.com/peterfei/purelayout.git
 cd purelayout
 
-# 安装依赖
 npm install
-
-# 运行测试
 npm test
-
-# 构建
 npm run build
 ```
 
 ---
 
-## 许可证
+## License
 
 [MIT](./LICENSE)
