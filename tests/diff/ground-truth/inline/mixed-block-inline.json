@@ -1,0 +1,35 @@
+{
+  "fixture": "diff/fixtures/inline/mixed-block-inline.html",
+  "container": {
+    "width": 800
+  },
+  "elements": [
+    {
+      "selector": "[data-test-id=\"container\"]",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 400,
+        "height": 118
+      }
+    },
+    {
+      "selector": "[data-test-id=\"block1\"]",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 100,
+        "height": 50
+      }
+    },
+    {
+      "selector": "[data-test-id=\"block2\"]",
+      "rect": {
+        "x": 0,
+        "y": 68,
+        "width": 100,
+        "height": 50
+      }
+    }
+  ]
+}

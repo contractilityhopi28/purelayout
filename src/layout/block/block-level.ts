@@ -7,6 +7,8 @@ import type { LayoutNode } from '../../types/layout.js';
  * 判断节点是否是 block-level
  */
 export function isBlockLevel(node: LayoutNode): boolean {
+  // 文本节点永远不是 block-level
+  if (node.type === 'text') return false;
   const display = node.computedStyle?.boxModel.display ?? 'inline';
   return display === 'block' || display === 'inline-block';
 }

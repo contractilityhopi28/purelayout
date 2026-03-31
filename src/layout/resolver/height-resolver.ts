@@ -38,6 +38,10 @@ export function resolveHeight(
 
   // box-sizing: border-box
   if (style.boxModel.boxSizing === 'border-box') {
+    const minBorderBoxHeight = paddingTop + paddingBottom + borderTop + borderBottom;
+    // 如果指定的 border-box height 小于 padding+border，则拉伸
+    height = Math.max(minBorderBoxHeight, height);
+    // 计算实际 content height
     height = Math.max(0, height - paddingTop - paddingBottom - borderTop - borderBottom);
   }
 

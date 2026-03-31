@@ -1,0 +1,35 @@
+{
+  "fixture": "diff/fixtures/block/margin-collapse-siblings.html",
+  "container": {
+    "width": 800
+  },
+  "elements": [
+    {
+      "selector": "[data-test-id=\"box1\"]",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 200,
+        "height": 50
+      }
+    },
+    {
+      "selector": "[data-test-id=\"box2\"]",
+      "rect": {
+        "x": 0,
+        "y": 80,
+        "width": 200,
+        "height": 50
+      }
+    },
+    {
+      "selector": "[data-test-id=\"box3\"]",
+      "rect": {
+        "x": 0,
+        "y": 150,
+        "width": 200,
+        "height": 50
+      }
+    }
+  ]
+}

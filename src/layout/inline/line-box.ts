@@ -3,7 +3,7 @@
  */
 import type { LineBox, LineFragment, LayoutOptions } from '../../types/layout.js';
 import type { TextStyle, TextSegment } from '../../types/text.js';
-import { findBreakOpportunities, splitAtBreak } from './line-break.js';
+import type { WhiteSpaceValue } from '../../types/style.js';
 
 interface InlineFragment {
   text: string;
@@ -22,10 +22,10 @@ export function buildLineBoxes(
   fragments: Array<{ text: string; style: TextStyle; sourceIndex: number }>,
   availableWidth: number,
   options: LayoutOptions,
+  whiteSpace: WhiteSpaceValue = 'normal',
 ): LineBox[] {
   const lineBoxes: LineBox[] = [];
-  let currentFragments: InlineFragment[] = [];
-  let currentLineWidth = 0;
+  const noWrap = whiteSpace === 'nowrap';
 
   // 预处理所有片段
   const processed: InlineFragment[] = [];
@@ -45,154 +45,139 @@ export function buildLineBoxes(
     });
   }
 
+  // 合并所有 segments 为一个列表，记录每个 segment 所属的 fragment
+  // 换行标记（sourceIndex === -1）作为独立的行断点
+  interface FlatSegment {
+    seg: TextSegment;
+    frag: InlineFragment;
+    isLineBreak: boolean;
+  }
+  const allSegments: FlatSegment[] = [];
   for (const frag of processed) {
-    if (frag.width <= availableWidth - currentLineWidth || currentLineWidth === 0) {
-      // 放入当前行
-      currentFragments.push(frag);
-      currentLineWidth += frag.width;
+    if (frag.sourceIndex === -1 && frag.text === '') {
+      // 换行标记
+      allSegments.push({ seg: { text: '', width: 0, isWhitespace: true, canBreakBefore: false, canBreakAfter: false }, frag, isLineBreak: true });
     } else {
-      // 需要换行
-      if (currentFragments.length > 0) {
-        lineBoxes.push(createLineBox(currentFragments));
-      }
-
-      // 尝试在断点处拆分
-      const remainingWidth = availableWidth;
-      if (frag.width > remainingWidth) {
-        // 文本超出一行，需要拆分
-        const splitResult = splitFragment(frag, remainingWidth, options);
-        if (splitResult.first) {
-          // 修正上一行（如果上一行还有空间的话就加上 first）
-          // 简化：first 放到新行
-          lineBoxes.push(createLineBox([splitResult.first]));
-        }
-        if (splitResult.remainder) {
-          currentFragments = [splitResult.remainder];
-          currentLineWidth = splitResult.remainder.width;
-        } else {
-          currentFragments = [];
-          currentLineWidth = 0;
-        }
-      } else {
-        currentFragments = [frag];
-        currentLineWidth = frag.width;
+      for (const seg of frag.segments) {
+        allSegments.push({ seg, frag, isLineBreak: false });
       }
     }
   }
 
-  // 最后一行
-  if (currentFragments.length > 0) {
-    lineBoxes.push(createLineBox(currentFragments));
+  // nowrap: 所有内容放在一行（但仍然处理换行标记）
+  if (whiteSpace === 'nowrap') {
+    const nonBreakSegments = allSegments.filter(s => !s.isLineBreak);
+    if (nonBreakSegments.length > 0) {
+      lineBoxes.push(createLineBoxFromSegments(nonBreakSegments));
+    }
+    return lineBoxes;
+  }
+
+  // pre: 按换行标记分割，每段放在一行
+  if (whiteSpace === 'pre') {
+    let currentLine: FlatSegment[] = [];
+    const lineHeight = processed.length > 0
+      ? processed[0].ascent + processed[0].descent
+      : 16 * 1.2; // fallback line height
+
+    for (let i = 0; i < allSegments.length; i++) {
+      const item = allSegments[i];
+      if (item.isLineBreak) {
+        if (currentLine.length > 0) {
+          lineBoxes.push(createLineBoxFromSegments(currentLine));
+        } else if (i < allSegments.length - 1) {
+          // 空行：仅当后面还有内容时创建
+          lineBoxes.push({
+            y: 0,
+            height: lineHeight,
+            baseline: lineHeight * 0.8,
+            width: 0,
+            fragments: [],
+          });
+        }
+        currentLine = [];
+      } else {
+        currentLine.push(item);
+      }
+    }
+    if (currentLine.length > 0) {
+      lineBoxes.push(createLineBoxFromSegments(currentLine));
+    }
+    return lineBoxes;
+  }
+
+  // 逐行填充
+  let remaining: FlatSegment[] = [...allSegments];
+
+  while (remaining.length > 0) {
+    const lineSegments: FlatSegment[] = [];
+    let lineWidth = 0;
+    let i = 0;
+
+    // 找出能放入当前行的 segments
+    while (i < remaining.length) {
+      const { seg } = remaining[i];
+      const segWidth = seg.width;
+
+      if (lineWidth + segWidth <= availableWidth) {
+        lineSegments.push(remaining[i]);
+        lineWidth += segWidth;
+        i++;
+      } else {
+        // 当前 segment 放不下
+        if (lineSegments.length === 0) {
+          // 行是空的但 segment 放不下 — 必须强制放入（unbreakable word）
+          lineSegments.push(remaining[i]);
+          i++;
+        }
+        break;
+      }
+    }
+
+    remaining = remaining.slice(i);
+
+    if (lineSegments.length > 0) {
+      lineBoxes.push(createLineBoxFromSegments(lineSegments));
+    }
   }
 
   return lineBoxes;
 }
 
-function createLineBox(fragments: InlineFragment[]): LineBox {
+function createLineBoxFromSegments(items: Array<{ seg: TextSegment; frag: InlineFragment }>): LineBox {
   let maxAscent = 0;
   let maxDescent = 0;
   let contentWidth = 0;
   const lineFragments: LineFragment[] = [];
   let x = 0;
 
-  for (const frag of fragments) {
+  for (const { seg, frag } of items) {
     maxAscent = Math.max(maxAscent, frag.ascent);
     maxDescent = Math.max(maxDescent, frag.descent);
 
-    for (const seg of frag.segments) {
-      lineFragments.push({
-        nodeIndex: frag.sourceIndex,
-        x,
-        y: 0,
-        width: seg.width,
-        height: frag.ascent + frag.descent,
-        baseline: frag.ascent,
-        text: seg.text,
-        ascent: frag.ascent,
-        descent: frag.descent,
-      });
-      x += seg.width;
-    }
-
-    contentWidth += frag.width;
+    lineFragments.push({
+      nodeIndex: frag.sourceIndex,
+      x,
+      y: 0,
+      width: seg.width,
+      height: frag.ascent + frag.descent,
+      baseline: frag.ascent,
+      text: seg.text,
+      ascent: frag.ascent,
+      descent: frag.descent,
+    });
+    x += seg.width;
+    contentWidth += seg.width;
   }
 
   const contentHeight = maxAscent + maxDescent;
-  // 使用第一个片段的 style 获取 lineHeight
-  const firstStyle = fragments[0]?.style;
-  const computedLineHeight = firstStyle
-    ? maxAscent + maxDescent // 简化：使用实际内容高度
-    : contentHeight;
-  const halfLeading = Math.max(0, (computedLineHeight - contentHeight) / 2);
+  const halfLeading = 0;
 
   return {
     y: 0,
-    height: computedLineHeight + halfLeading * 2,
+    height: contentHeight + halfLeading * 2,
     baseline: maxAscent + halfLeading,
     width: contentWidth,
     fragments: lineFragments,
-  };
-}
-
-interface SplitResult {
-  first: InlineFragment | null;
-  remainder: InlineFragment | null;
-}
-
-function splitFragment(
-  frag: InlineFragment,
-  maxWidth: number,
-  options: LayoutOptions,
-): SplitResult {
-  const breakOpportunities = findBreakOpportunities(
-    frag.segments,
-    frag.style,
-    options,
-  );
-
-  if (breakOpportunities.length === 0) {
-    return { first: frag, remainder: null };
-  }
-
-  // 找到第一个不超过 maxWidth 的断点
-  let accumulatedWidth = 0;
-  let breakIndex = -1;
-
-  for (const opp of breakOpportunities) {
-    if ((accumulatedWidth + (frag.segments[opp]?.width ?? 0)) <= maxWidth) {
-      breakIndex = opp;
-    } else {
-      break;
-    }
-    accumulatedWidth += frag.segments[opp]?.width ?? 0;
-  }
-
-  if (breakIndex < 0) {
-    // 无法在合适位置断开，整体放到下一行
-    return { first: null, remainder: frag };
-  }
-
-  const firstSegments = frag.segments.slice(0, breakIndex + 1);
-  const remainderSegments = frag.segments.slice(breakIndex + 1);
-
-  const firstWidth = firstSegments.reduce((s, seg) => s + seg.width, 0);
-  const remainderWidth = remainderSegments.reduce((s, seg) => s + seg.width, 0);
-
-  return {
-    first: {
-      ...frag,
-      text: firstSegments.map((s) => s.text).join(''),
-      width: firstWidth,
-      segments: firstSegments,
-    },
-    remainder:
-      remainderSegments.length > 0
-        ? {
-            ...frag,
-            text: remainderSegments.map((s) => s.text).join(''),
-            width: remainderWidth,
-            segments: remainderSegments,
-          }
-        : null,
   };
 }

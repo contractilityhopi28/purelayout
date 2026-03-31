@@ -24,29 +24,24 @@ export function collapseMargins(a: number, b: number): number {
  * - 父元素不是 block display
  */
 export function canCollapseParentChildMarginTop(
-  parentComputedStyle: {
+  parentBoxModel: {
     borderTopWidth: { type: string; value?: number; unit?: string };
-    paddingTop: { type: string; value?: number; unit?: string };
-    display: string;
-    overflow: string;
+    paddingTop: { type: string; value?: number; unit?: string } | number;
+    display?: string;
+    overflow?: string;
   },
 ): boolean {
   // 父元素有 border-top 阻止折叠
   if (
-    parentComputedStyle.borderTopWidth.type === 'length' &&
-    (parentComputedStyle.borderTopWidth.value ?? 0) > 0
+    parentBoxModel.borderTopWidth.type === 'length' &&
+    (parentBoxModel.borderTopWidth.value ?? 0) > 0
   ) {
     return false;
   }
   // 父元素有 padding-top 阻止折叠
-  if (
-    parentComputedStyle.paddingTop.type === 'length' &&
-    (parentComputedStyle.paddingTop.value ?? 0) > 0
-  ) {
-    return false;
-  }
-  // 父元素 display 不是 block 阻止折叠
-  if (parentComputedStyle.display !== 'block') {
+  const pt = parentBoxModel.paddingTop;
+  if (typeof pt === 'number' ? pt > 0 :
+    pt.type === 'length' && (pt.value ?? 0) > 0) {
     return false;
   }
   return true;
@@ -56,25 +51,21 @@ export function canCollapseParentChildMarginTop(
  * 检查父子 margin-bottom 是否可以折叠
  */
 export function canCollapseParentChildMarginBottom(
-  parentComputedStyle: {
+  parentBoxModel: {
     borderBottomWidth: { type: string; value?: number; unit?: string };
-    paddingBottom: { type: string; value?: number; unit?: string };
-    display: string;
+    paddingBottom: { type: string; value?: number; unit?: string } | number;
+    display?: string;
   },
 ): boolean {
   if (
-    parentComputedStyle.borderBottomWidth.type === 'length' &&
-    (parentComputedStyle.borderBottomWidth.value ?? 0) > 0
+    parentBoxModel.borderBottomWidth.type === 'length' &&
+    (parentBoxModel.borderBottomWidth.value ?? 0) > 0
   ) {
     return false;
   }
-  if (
-    parentComputedStyle.paddingBottom.type === 'length' &&
-    (parentComputedStyle.paddingBottom.value ?? 0) > 0
-  ) {
-    return false;
-  }
-  if (parentComputedStyle.display !== 'block') {
+  const pb = parentBoxModel.paddingBottom;
+  if (typeof pb === 'number' ? pb > 0 :
+    pb.type === 'length' && (pb.value ?? 0) > 0) {
     return false;
   }
   return true;

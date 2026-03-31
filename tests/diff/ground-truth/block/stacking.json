@@ -1,0 +1,26 @@
+{
+  "fixture": "diff/fixtures/block/stacking.html",
+  "container": {
+    "width": 800
+  },
+  "elements": [
+    {
+      "selector": "[data-test-id=\"box\"]",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 400,
+        "height": 100
+      }
+    },
+    {
+      "selector": "[data-test-id=\"after\"]",
+      "rect": {
+        "x": 0,
+        "y": 100,
+        "width": 200,
+        "height": 50
+      }
+    }
+  ]
+}

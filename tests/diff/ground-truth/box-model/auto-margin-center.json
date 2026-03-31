@@ -1,0 +1,26 @@
+{
+  "fixture": "diff/fixtures/box-model/auto-margin-center.html",
+  "container": {
+    "width": 800
+  },
+  "elements": [
+    {
+      "selector": "[data-test-id=\"outer\"]",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 400,
+        "height": 50
+      }
+    },
+    {
+      "selector": "[data-test-id=\"inner\"]",
+      "rect": {
+        "x": 100,
+        "y": 0,
+        "width": 200,
+        "height": 50
+      }
+    }
+  ]
+}

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PureLayout 交互式演示</title>
+    <style>
+        body { margin: 0; padding: 0; font-family: sans-serif; display: flex; height: 100vh; overflow: hidden; }
+        #editor-container { flex: 1; display: flex; flex-direction: column; border-right: 1px solid #ccc; }
+        #code-editor { flex: 1; border: none; padding: 10px; font-family: monospace; font-size: 14px; resize: none; outline: none; }
+        #controls { padding: 10px; border-top: 1px solid #ccc; background-color: #f0f0f0; }
+        #render-container { flex: 1; display: flex; justify-content: center; align-items: center; background-color: #f9f9f9; }
+        canvas { border: 1px solid #ddd; background-color: #fff; }
+    </style>
+</head>
+<body>
+    <div id="editor-container">
+        <textarea id="code-editor" spellcheck="false">
+// 在这里编写您的 PureLayout 布局代码
+// 示例：定义一个简单的块级元素和它的子元素
+
+const rootNode = {
+    type: 'block',
+    style: {
+        width: '500px',
+        height: '300px',
+        padding: '20px',
+        margin: '30px',
+        borderWidth: '5px',
+        borderColor: 'black',
+        backgroundColor: '#e0f7fa', // Light Cyan
+        display: 'block',
+    },
+    children: [
+        {
+            type: 'block',
+            style: {
+                width: '100px',
+                height: '80px',
+                margin: '10px',
+                padding: '5px',
+                borderWidth: '2px',
+                borderColor: 'red',
+                backgroundColor: '#ffe0b2', // Light Orange
+                display: 'block',
+            },
+            children: []
+        },
+        {
+            type: 'inline',
+            style: {
+                backgroundColor: '#c8e6c9', // Light Green
+                padding: '2px',
+                borderWidth: '1px',
+                borderColor: 'green',
+                fontSize: '16px',
+            },
+            text: 'Hello PureLayout!',
+            children: []
+        }
+    ]
+};
+
+// 请确保您的代码最终返回一个可供 PureLayout 布局的节点对象。
+return rootNode; 
+</textarea>
+        <div id="controls">
+            <button id="run-button">运行布局</button>
+            <span>（请确保 `dist/index.js` 在 `demo.html` 同级目录）</span>
+        </div>
+    </div>
+    <div id="render-container">
+        <canvas id="layout-canvas" width="600" height="400"></canvas>
+    </div>
+
+    <script type="module">
+        import { LayoutEngine } from './dist/index.js'; 
+        // ^^^ 确保这里的路径是正确的，相对于 demo.html
+        // 如果 dist 文件夹与 demo.html 同级，路径就是 './dist/index.js'
+
+        const codeEditor = document.getElementById('code-editor');
+        const layoutCanvas = document.getElementById('layout-canvas');
+        const ctx = layoutCanvas.getContext('2d');
+        const runButton = document.getElementById('run-button');
+
+        const layoutEngine = new LayoutEngine(); // 直接创建 LayoutEngine 实例
+
+        function runLayout() {
+            const code = codeEditor.value;
+            let layoutResult;
+            try {
+                // 动态执行用户输入的代码。
+                // 注意：new Function() 存在安全风险，仅用于本地演示。
+                // 在生产环境中需要更安全的沙箱机制。
+                // 用户输入的代码应该返回一个节点对象。
+                const func = new Function('LayoutEngine', 'return ' + code);
+                const nodeToLayout = func(LayoutEngine); 
+                layoutResult = layoutEngine.layout(nodeToLayout);
+                console.log("布局计算结果 (layoutResult):", layoutResult); // 添加调试日志
+            } catch (e) {
+                console.error("布局代码执行错误:", e);
+                alert("布局代码执行错误：
+" + e.message);
+                return;
+            }
+
+            drawLayout(layoutResult);
+        }
+
+        function drawLayout(layoutNode) {
+            ctx.clearRect(0, 0, layoutCanvas.width, layoutCanvas.height);
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
+
+            // 直接使用颜色字符串，Canvas 会尝试解析它
+            const parseColor = (colorName) => {
+                // 尝试解析，如果无效则返回默认或透明色
+                const s = new Option().style;
+                s.color = colorName;
+                return s.color || 'transparent'; 
+            };
+
+            function drawBox(node, parentOffsetX = 0, parentOffsetY = 0) {
+                const { layout, style, text, children } = node;
+                console.log("绘制节点:", node); // 添加调试日志
+                if (!layout) {
+                    console.warn("节点没有布局信息:", node); // 添加警告
+                    return;
+                }
+
+                const offsetX = parentOffsetX + layout.position.x;
+                const offsetY = parentOffsetY + layout.position.y;
+
+                // 绘制背景 (Content Box)
+                if (style.backgroundColor) {
+                    ctx.fillStyle = parseColor(style.backgroundColor);
+                    ctx.fillRect(offsetX + layout.padding.left + layout.border.left,
+                                 offsetY + layout.padding.top + layout.border.top,
+                                 layout.content.width,
+                                 layout.content.height);
+                }
+
+                // 绘制 Padding (使用半透明灰色)
+                const hasPadding = layout.padding.left || layout.padding.top || layout.padding.right || layout.padding.bottom;
+                if (hasPadding) {
+                    ctx.fillStyle = 'rgba(200, 200, 200, 0.3)'; 
+                    // Top padding
+                    ctx.fillRect(offsetX + layout.border.left, offsetY + layout.border.top, layout.width - layout.border.left - layout.border.right, layout.padding.top);
+                    // Bottom padding
+                    ctx.fillRect(offsetX + layout.border.left, offsetY + layout.height - layout.border.bottom - layout.padding.bottom, layout.width - layout.border.left - layout.border.right, layout.padding.bottom);
+                    // Left padding
+                    ctx.fillRect(offsetX + layout.border.left, offsetY + layout.border.top + layout.padding.top, layout.padding.left, layout.height - layout.border.top - layout.border.bottom - layout.padding.top - layout.padding.bottom);
+                    // Right padding
+                    ctx.fillRect(offsetX + layout.width - layout.border.right - layout.padding.right, offsetY + layout.border.top + layout.padding.top, layout.padding.right, layout.height - layout.border.top - layout.border.bottom - layout.padding.top - layout.padding.bottom);
+                }
+                
+                // 绘制 Border (简化处理，只绘制一个外边框来代表整个边框)
+                const borderWidth = parseFloat(style.borderWidth) || 0;
+                if (borderWidth > 0) {
+                    ctx.strokeStyle = parseColor(style.borderColor) || 'black';
+                    ctx.lineWidth = borderWidth;
+                    ctx.strokeRect(offsetX + borderWidth / 2, offsetY + borderWidth / 2, layout.width - borderWidth, layout.height - borderWidth);
+                }
+
+                // 绘制文本
+                if (text) {
+                    ctx.fillStyle = 'black';
+                    ctx.fillText(text, offsetX + layout.padding.left + layout.border.left, offsetY + layout.padding.top + layout.border.top);
+                }
+                
+                // 绘制布局信息 (可选)
+                ctx.fillStyle = 'black';
+                ctx.fillText(`(${Math.round(layout.position.x)},${Math.round(layout.position.y)}) ${Math.round(layout.width)}x${Math.round(layout.height)}`, offsetX, offsetY - 15);
+
+
+                // 绘制子元素
+                children.forEach(child => drawBox(child, offsetX, offsetY));
+            }
+
+            drawBox(layoutNode); // 从根节点开始绘制
+        }
+
+        // 绑定事件监听器
+        runButton.addEventListener('click', runLayout);
+
+        // 页面加载后自动运行一次
+        runLayout(); 
+
+    </script>
+</body>
+</html>

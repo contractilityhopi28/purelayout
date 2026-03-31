@@ -34,6 +34,7 @@ export interface LayoutNode {
   sourceIndex: number;
   type: LayoutNodeType;
   tagName: string;
+  testId?: string;
   computedStyle: ComputedStyle;
   contentRect: Rect;
   boxModel: ComputedBoxModel;

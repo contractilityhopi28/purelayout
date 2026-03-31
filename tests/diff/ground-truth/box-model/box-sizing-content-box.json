@@ -1,0 +1,17 @@
+{
+  "fixture": "diff/fixtures/box-model/box-sizing-content-box.html",
+  "container": {
+    "width": 800
+  },
+  "elements": [
+    {
+      "selector": "[data-test-id=\"content-box\"]",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 250,
+        "height": 150
+      }
+    }
+  ]
+}

@@ -38,6 +38,10 @@ export function resolveWidth(
 
   // box-sizing: border-box
   if (style.boxModel.boxSizing === 'border-box') {
+    const minBorderBoxWidth = paddingLeft + paddingRight + borderLeft + borderRight;
+    // 如果指定的 border-box width 小于 padding+border，则拉伸
+    width = Math.max(minBorderBoxWidth, width);
+    // 计算实际 content width
     width = Math.max(0, width - paddingLeft - paddingRight - borderLeft - borderRight);
   }
 

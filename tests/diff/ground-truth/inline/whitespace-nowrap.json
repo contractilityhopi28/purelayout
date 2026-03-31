@@ -1,0 +1,26 @@
+{
+  "fixture": "diff/fixtures/inline/whitespace-nowrap.html",
+  "container": {
+    "width": 800
+  },
+  "elements": [
+    {
+      "selector": "[data-test-id=\"container\"]",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 200,
+        "height": 18
+      }
+    },
+    {
+      "selector": "[data-test-id=\"text\"]",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 203.08,
+        "height": 18
+      }
+    }
+  ]
+}

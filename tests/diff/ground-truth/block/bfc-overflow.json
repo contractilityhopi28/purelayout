@@ -1,0 +1,44 @@
+{
+  "fixture": "diff/fixtures/block/bfc-overflow.html",
+  "container": {
+    "width": 800
+  },
+  "elements": [
+    {
+      "selector": "[data-test-id=\"bfc\"]",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 400,
+        "height": 130
+      }
+    },
+    {
+      "selector": "[data-test-id=\"inner1\"]",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 200,
+        "height": 50
+      }
+    },
+    {
+      "selector": "[data-test-id=\"inner2\"]",
+      "rect": {
+        "x": 0,
+        "y": 80,
+        "width": 200,
+        "height": 50
+      }
+    },
+    {
+      "selector": "[data-test-id=\"after\"]",
+      "rect": {
+        "x": 0,
+        "y": 170,
+        "width": 200,
+        "height": 50
+      }
+    }
+  ]
+}

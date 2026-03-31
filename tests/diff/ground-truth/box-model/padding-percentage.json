@@ -1,0 +1,17 @@
+{
+  "fixture": "diff/fixtures/box-model/padding-percentage.html",
+  "container": {
+    "width": 800
+  },
+  "elements": [
+    {
+      "selector": "[data-test-id=\"box\"]",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 560,
+        "height": 260
+      }
+    }
+  ]
+}

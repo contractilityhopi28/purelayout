@@ -117,10 +117,10 @@ describe('getBoundingClientRect()', () => {
     const result = layout(tree, { containerWidth: 800, textMeasurer: measurer });
     const rect = getBoundingClientRect(result.root);
 
-    // margin box width = margin-left + padding-left + content-width + padding-right + margin-right
-    expect(rect.width).toBe(20 + 15 + 100 + 0 + 0); // 135
-    expect(rect.height).toBe(10 + 5 + 50 + 0 + 0); // 65
-    expect(rect.x).toBe(-20); // margin box starts before content
-    expect(rect.y).toBe(-10);
+    // border box width = padding-left + content-width + padding-right
+    expect(rect.width).toBe(15 + 100 + 0); // 115
+    expect(rect.height).toBe(5 + 50 + 0); // 55
+    expect(rect.x).toBe(0); // border box starts at content origin
+    expect(rect.y).toBe(0);
   });
 });

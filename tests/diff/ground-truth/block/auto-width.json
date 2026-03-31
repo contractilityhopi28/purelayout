@@ -1,0 +1,17 @@
+{
+  "fixture": "diff/fixtures/block/auto-width.html",
+  "container": {
+    "width": 800
+  },
+  "elements": [
+    {
+      "selector": "[data-test-id=\"auto-width\"]",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 800,
+        "height": 50
+      }
+    }
+  ]
+}
