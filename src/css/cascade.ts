@@ -116,8 +116,11 @@ function expandShorthands(style: Record<string, unknown>): void {
 /**
  * 从 CSSValue 解析出 px 数值
  */
-export function resolveLength(value: CSSValue | undefined, fallback: number = 0): number {
-  if (!value) return fallback;
+export function resolveLength(value: CSSValue | number | undefined, fallback: number = 0): number {
+  if (value === undefined || value === null) return fallback;
+  // 直接的数字（像素值）
+  if (typeof value === 'number') return value;
+  // CSSValue 对象
   if (value.type === 'length') return value.value;
   if (value.type === 'percentage') return value.value / 100 * fallback;
   if (value.type === 'em' || value.type === 'rem') {

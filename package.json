@@ -34,7 +34,14 @@
     "test:diff:capture": "npx tsx tests/diff/capture.ts",
     "lint": "tsc --noEmit",
     "bench": "vitest bench",
-    "demo:flexbox": "node demos/demo-flexbox.mjs"
+    "demo": "npm run demo:flexbox && npm run demo:typography && npm run demo:ui && npm run demo:responsive && npm run demo:dataviz && npm run demo:pretext && npm run demo:multilang",
+    "demo:flexbox": "node demos/demo-flexbox.mjs",
+    "demo:typography": "node demos/demo-typography.mjs",
+    "demo:ui": "node demos/demo-ui-components.mjs",
+    "demo:responsive": "node demos/demo-responsive.mjs",
+    "demo:dataviz": "node demos/demo-data-viz.mjs",
+    "demo:pretext": "node demos/demo-pretext.mjs",
+    "demo:multilang": "node demos/demo-multilang.mjs"
   },
   "devDependencies": {
     "playwright": "^1.50.0",
