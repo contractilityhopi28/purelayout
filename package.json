@@ -33,7 +33,8 @@
     "test:diff": "vitest run --dir tests/diff",
     "test:diff:capture": "npx tsx tests/diff/capture.ts",
     "lint": "tsc --noEmit",
-    "bench": "vitest bench"
+    "bench": "vitest bench",
+    "demo:flexbox": "node demos/demo-flexbox.mjs"
   },
   "devDependencies": {
     "tsup": "^8.4.0",

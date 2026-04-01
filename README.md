@@ -218,6 +218,10 @@ interface LayoutNode {
 - **排序**：`order` 属性重排 flex items
 - **间距**：`gap` 简写 + `row-gap` / `column-gap` 独立控制
 
+<p align="center">
+  <img src="demos/demo-flexbox.png" alt="PureLayout Flexbox 高级特性展示 — 12 个布局场景" width="680" />
+</p>
+
 ### Inline 布局
 
 - **Line Box**：基于 font metrics (ascent/descent) 构建行框

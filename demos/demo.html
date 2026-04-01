@@ -93,9 +93,9 @@ return rootNode;
     </div>
 
     <script type="module">
-        import { LayoutEngine } from './dist/index.js'; 
+        import { LayoutEngine } from '../dist/index.js';
         // ^^^ Ensure this path is correct, relative to demo.html
-        // If the dist folder is in the same directory as demo.html, the path is './dist/index.js'
+        // Path is '../dist/index.js' since demos/ is a subdirectory
 
         const codeEditor = document.getElementById('code-editor');
         const layoutCanvas = document.getElementById('layout-canvas');
