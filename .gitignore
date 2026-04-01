@@ -4,3 +4,4 @@ dist/
 .DS_Store
 coverage/
 purelayout_tech_article.md
+settings.local.json

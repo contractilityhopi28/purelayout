@@ -12,7 +12,6 @@ import { layoutBlockFormattingContext } from './block/block-formatting.js';
 import { layoutFlexFormattingContext } from './flex/flex-formatting.js';
 import { establishesBFC } from './block/bfc.js';
 import { canCollapseParentChildMarginTop } from './block/margin-collapse.js';
-import { resolveLength } from '../css/cascade.js';
 
 let globalSourceIndex = 0;
 

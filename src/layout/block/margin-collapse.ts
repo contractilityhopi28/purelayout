@@ -24,12 +24,7 @@ export function collapseMargins(a: number, b: number): number {
  * - 父元素不是 block display
  */
 export function canCollapseParentChildMarginTop(
-  parentBoxModel: {
-    borderTopWidth: { type: string; value?: number; unit?: string };
-    paddingTop: { type: string; value?: number; unit?: string } | number;
-    display?: string;
-    overflow?: string;
-  },
+  parentBoxModel: Record<string, unknown>,
 ): boolean {
   // 父元素有 border-top 阻止折叠
   if (
