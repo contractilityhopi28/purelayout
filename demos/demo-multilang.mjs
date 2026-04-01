@@ -138,17 +138,15 @@ function renderLayout(layoutRoot, offsetX, offsetY, langCode) {
 
       // 绘制每一行文本
       node.lineBoxes.forEach((line, lineIndex) => {
-        if (line && line.fragments) {
-          // line.y 是该行相对于内容区域顶部的偏移
-          // line.baseline 是基线相对于行顶的偏移
-          const lineTop = cy + line.y;
-          const baselineY = lineTop + line.baseline;
+        if (line && line.fragments && line.fragments.length > 0) {
+          const baselineY = py + cr.y + line.y + line.baseline;
+          const firstFragX = line.fragments[0].x;
 
           // 行号
           ctx.fillStyle = LANG_COLORS[langCode] || LANG_COLORS.mixed;
           ctx.font = 'bold 11px "SF Mono", monospace';
           ctx.textAlign = 'right';
-          ctx.fillText(`Line ${lineIndex + 1}`, cx - 10, baselineY);
+          ctx.fillText(`Line ${lineIndex + 1}`, px + cr.x + firstFragX - 10, baselineY);
 
           // 文本内容
           ctx.fillStyle = '#1a1a1a';
@@ -156,11 +154,7 @@ function renderLayout(layoutRoot, offsetX, offsetY, langCode) {
           ctx.textAlign = 'left';
 
           line.fragments.forEach(frag => {
-            // frag.x 是该片段相对于行左侧的偏移
-            // frag.ascent 是基线相对于片段顶部的偏移
-            const fragX = cx + frag.x;
-            const fragY = lineTop + frag.baseline;
-            ctx.fillText(frag.text, fragX, fragY);
+            ctx.fillText(frag.text, px + cr.x + frag.x, baselineY);
           });
         }
       });
@@ -180,7 +174,7 @@ function renderLayout(layoutRoot, offsetX, offsetY, langCode) {
     // 递归子元素
     if (node.children) {
       node.children.forEach(child => {
-        visit(child, px + cr.x - bm.paddingLeft, py + cr.y - bm.paddingTop);
+        visit(child, px + cr.x, py + cr.y);
       });
     }
   }

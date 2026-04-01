@@ -205,15 +205,14 @@ function renderLayout(layoutRoot, offsetX, offsetY, showMetrics = true) {
       const cy = y + bm.paddingTop;
 
       node.lineBoxes.forEach((line, lineIndex) => {
-        if (line && line.segments) {
-          line.segments.forEach(seg => {
-            ctx.fillText(seg.text, cx + seg.x, cy + seg.y + seg.height);
+        if (line && line.fragments) {
+          line.fragments.forEach(frag => {
+            ctx.fillText(frag.text, px + cr.x + frag.x, py + cr.y + line.y + line.baseline);
 
-            // 显示段落尺寸
-            if (showMetrics && lineIndex === 0 && seg.x < 5) {
+            if (showMetrics && lineIndex === 0 && frag.x < 5) {
               ctx.fillStyle = hexToRxa('#8b949e', 0.5);
               ctx.font = '8px "SF Mono", monospace';
-              ctx.fillText(`${Math.round(seg.width)}px`, cx + seg.x, cy + seg.y + seg.height + 12);
+              ctx.fillText(`${Math.round(frag.width)}px`, px + cr.x + frag.x, py + cr.y + line.y + line.baseline + 12);
               ctx.fillStyle = cs.color || '#c9d1d9';
             }
           });
@@ -224,7 +223,7 @@ function renderLayout(layoutRoot, offsetX, offsetY, showMetrics = true) {
     // 递归子元素
     if (node.children) {
       node.children.forEach(child => {
-        visit(child, px + cr.x - bm.paddingLeft, py + cr.y - bm.paddingTop);
+        visit(child, px + cr.x, py + cr.y);
       });
     }
   }

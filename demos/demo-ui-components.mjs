@@ -46,6 +46,26 @@ function p(text) {
   return { tagName: 'p', style: {}, children: [text] };
 }
 
+// 解析 padding 简写 (例如: "10px 20px" → { paddingTop, paddingRight, paddingBottom, paddingLeft })
+function padding(value) {
+  if (typeof value === 'string') {
+    const parts = value.split(' ').map(v => parseFloat(v.replace('px', '')));
+    if (parts.length === 1) {
+      return { paddingTop: px(parts[0]), paddingRight: px(parts[0]), paddingBottom: px(parts[0]), paddingLeft: px(parts[0]) };
+    } else if (parts.length === 2) {
+      return { paddingTop: px(parts[0]), paddingBottom: px(parts[0]), paddingLeft: px(parts[1]), paddingRight: px(parts[1]) };
+    } else if (parts.length === 4) {
+      return { paddingTop: px(parts[0]), paddingRight: px(parts[1]), paddingBottom: px(parts[2]), paddingLeft: px(parts[3]) };
+    }
+  }
+  return { paddingTop: px(value), paddingRight: px(value), paddingBottom: px(value), paddingLeft: px(value) };
+}
+
+// 合并样式的辅助函数
+function mergeStyle(base, extra) {
+  return { ...base, ...extra };
+}
+
 function roundRect(x, y, w, h, r) {
   r = Math.max(0, Math.min(r, w / 2, h / 2));
   ctx.beginPath();
@@ -97,43 +117,67 @@ function drawCard(x, y, w, h, title) {
 }
 
 function renderLayout(layoutRoot, offsetX, offsetY) {
-  function visit(node, px, py) {
+  const boxes = [];
+  const texts = [];
+
+  // px/py 递归累加每个节点的 cr.x/cr.y
+  // frag.x 和 line.y 是局部坐标（相对于行）
+  function collect(node, px, py) {
     const cr = node.contentRect;
     const bm = node.boxModel;
-    const cs = node.computedStyle;
-    const x = px + cr.x - bm.paddingLeft;
-    const y = py + cr.y - bm.paddingTop;
-    const w = cr.width + bm.paddingLeft + bm.paddingRight;
-    const h = cr.height + bm.paddingTop + bm.paddingBottom;
 
-    // 文本
+    if (bm.paddingTop > 0 || bm.paddingRight > 0 || bm.paddingBottom > 0 || bm.paddingLeft > 0) {
+      boxes.push({
+        x: px + cr.x - bm.paddingLeft,
+        y: py + cr.y - bm.paddingTop,
+        w: cr.width + bm.paddingLeft + bm.paddingRight,
+        h: cr.height + bm.paddingTop + bm.paddingBottom,
+      });
+    }
+
     if (node.lineBoxes && node.lineBoxes.length > 0) {
-      ctx.fillStyle = cs.color || '#000';
-      ctx.font = `${cs.fontStyle || 'normal'} ${cs.fontWeight || 400} ${cs.fontSize || 14}px ${cs.fontFamily || 'sans-serif'}`;
-      ctx.textAlign = 'left';
-      ctx.textBaseline = 'alphabetic';
-
-      const cx = x + bm.paddingLeft;
-      const cy = y + bm.paddingTop;
-
+      const cs = node.computedStyle;
+      const fontSize = Math.max(typeof cs.fontSize === 'number' ? cs.fontSize : 14, 14);
       node.lineBoxes.forEach(line => {
-        if (line && line.segments) {
-          line.segments.forEach(seg => {
-            ctx.fillText(seg.text, cx + seg.x, cy + seg.y + seg.height);
+        if (line && line.fragments) {
+          line.fragments.forEach(frag => {
+            texts.push({
+              text: frag.text,
+              x: px + cr.x + frag.x,
+              y: py + cr.y + line.y + line.baseline,
+              fontSize,
+              fontStyle: cs.fontStyle || 'normal',
+              fontWeight: cs.fontWeight || 400,
+            });
           });
         }
       });
     }
 
-    // 递归子元素
     if (node.children) {
-      node.children.forEach(child => {
-        visit(child, px + cr.x - bm.paddingLeft, py + cr.y - bm.paddingTop);
-      });
+      node.children.forEach(child => collect(child, px + cr.x, py + cr.y));
     }
   }
 
-  visit(layoutRoot, offsetX, offsetY);
+  collect(layoutRoot, offsetX, offsetY);
+
+  boxes.forEach(box => {
+    ctx.fillStyle = 'rgba(59, 130, 246, 0.08)';
+    roundRect(box.x, box.y, box.w, box.h, 6);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(59, 130, 246, 0.3)';
+    ctx.lineWidth = 1;
+    roundRect(box.x, box.y, box.w, box.h, 6);
+    ctx.stroke();
+  });
+
+  texts.forEach(t => {
+    ctx.fillStyle = '#1e293b';
+    ctx.font = `${t.fontStyle} ${t.fontWeight} ${t.fontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillText(t.text, t.x, t.y);
+  });
 }
 
 // ============================================================
@@ -149,11 +193,11 @@ const scene1Tree = div({
     gap: px(12),
     flexWrap: 'wrap',
   }, [
-    div({ padding: '10px 20px', width: px(80) }, [p('Primary')]),
-    div({ padding: '10px 20px', width: px(80) }, [p('Secondary')]),
-    div({ padding: '10px 20px', width: px(80) }, [p('Success')]),
-    div({ padding: '8px 16px', width: px(70) }, [p('Small')]),
-    div({ padding: '12px 24px', width: px(80) }, [p('Medium')]),
+    div({ width: px(100), padding: px(12) }, [p('Primary')]),
+    div({ width: px(100), padding: px(12) }, [p('Secondary')]),
+    div({ width: px(100), padding: px(12) }, [p('Success')]),
+    div({ width: px(80), padding: px(10) }, [p('Small')]),
+    div({ width: px(100), padding: px(14) }, [p('Medium')]),
   ]),
 ]);
 
@@ -165,19 +209,13 @@ const scene2Tree = div({
     display: 'flex',
     gap: px(16),
   }, [
-    div({
-      flex: 1,
-      padding: px(16),
-    }, [
+    div(mergeStyle({ flex: 1 }, padding(16)), [
       p('Card 1'),
-      p('Content area with flex layout'),
+      p('Content area'),
     ]),
-    div({
-      flex: 1,
-      padding: px(16),
-    }, [
+    div(mergeStyle({ flex: 1 }, padding(16)), [
       p('Card 2'),
-      p('Equal width distribution'),
+      p('Equal width'),
     ]),
   ]),
 ]);
@@ -186,22 +224,16 @@ const scene2Tree = div({
 const scene3Tree = div({
   width: px(500),
 }, [
-  div({
+  div(mergeStyle({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: px(12),
-  }, [
-    div({ width: px(60) }, [p('Brand')]),
-    div({
-      display: 'flex',
-      gap: px(24),
-    }, [
-      div({ width: px(40) }, [p('Home')]),
-      div({ width: px(50) }, [p('Shop')]),
-      div({ width: px(50) }, [p('About')]),
-    ]),
-    div({ padding: '6px 16px', width: px(60) }, [p('Sign In')]),
+  }, padding(12)), [
+    div({ width: px(80), padding: px(8) }, [p('Brand')]),
+    div({ width: px(60), padding: px(8) }, [p('Home')]),
+    div({ width: px(60), padding: px(8) }, [p('Shop')]),
+    div({ width: px(60), padding: px(8) }, [p('About')]),
+    div({ width: px(80), padding: px(8) }, [p('Sign In')]),
   ]),
 ]);
 
@@ -216,11 +248,11 @@ const scene4Tree = div({
   }, [
     div({}, [
       p('Email'),
-      div({ padding: '12px 16px', width: px(200) }, [p('user@example.com')]),
+      div({ width: px(250), padding: px(12) }, [p('user@example.com')]),
     ]),
     div({}, [
       p('Message'),
-      div({ padding: 16, width: px(300), minHeight: px(60) }, [p('Type your message...')]),
+      div(mergeStyle({ width: px(300), minHeight: px(60) }, padding(12)), [p('Type your message...')]),
     ]),
   ]),
 ]);
@@ -231,14 +263,14 @@ const scene5Tree = div({
 }, [
   div({
     display: 'flex',
-    gap: px(8),
+    gap: px(10),
     flexWrap: 'wrap',
   }, [
-    div({ padding: '4px 10px', width: px(50) }, [p('Active')]),
-    div({ padding: '4px 10px', width: px(60) }, [p('Pending')]),
-    div({ padding: '4px 10px', width: px(45) }, [p('Error')]),
-    div({ padding: '4px 8px', width: px(45) }, [p('Beta')]),
-    div({ padding: '4px 8px', width: px(35) }, [p('WIP')]),
+    div({ width: px(70), padding: px(6) }, [p('Active')]),
+    div({ width: px(80), padding: px(6) }, [p('Pending')]),
+    div({ width: px(65), padding: px(6) }, [p('Error')]),
+    div({ width: px(60), padding: px(6) }, [p('Beta')]),
+    div({ width: px(55), padding: px(6) }, [p('WIP')]),
   ]),
 ]);
 
@@ -246,24 +278,18 @@ const scene5Tree = div({
 const scene6Tree = div({
   width: px(500),
 }, [
-  div({
-    padding: px(20),
-  }, [
-    div({
-      marginBottom: px(16),
-    }, [p('Confirm Action')]),
-    div({
-      marginBottom: px(16),
-    }, [
-      p('Are you sure you want to proceed? This action cannot be undone.'),
+  div(padding(20), [
+    div({ marginBottom: px(16) }, [p('Confirm Action')]),
+    div({ marginBottom: px(16) }, [
+      p('This action cannot be undone.'),
     ]),
     div({
       display: 'flex',
       justifyContent: 'flex-end',
       gap: px(12),
     }, [
-      div({ padding: '8px 16px', width: px(60) }, [p('Cancel')]),
-      div({ padding: '8px 16px', width: px(65) }, [p('Confirm')]),
+      div({ width: px(80), padding: px(10) }, [p('Cancel')]),
+      div({ width: px(90), padding: px(10) }, [p('Confirm')]),
     ]),
   ]),
 ]);
@@ -285,9 +311,11 @@ const scenes = [
 ];
 
 scenes.forEach(scene => {
-  const { x: sx, y: sy, w: sw } = drawCard(scene.x, scene.y, 550, 200, scene.title);
+  const result = layout(scene.tree, { containerWidth: 518, textMeasurer: measurer });
+  const contentH = result.root.contentRect.height + result.root.boxModel.paddingTop + result.root.boxModel.paddingBottom;
+  const cardH = Math.max(contentH + 45, 120); // 45 = title + padding
 
-  const result = layout(scene.tree, { containerWidth: sw, textMeasurer: measurer });
+  const { x: sx, y: sy, w: sw } = drawCard(scene.x, scene.y, 550, cardH, scene.title);
   renderLayout(result.root, sx, sy);
 });
 

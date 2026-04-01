@@ -95,43 +95,65 @@ function drawCard(x, y, w, h, title) {
 }
 
 function renderLayout(layoutRoot, offsetX, offsetY) {
-  function visit(node, px, py) {
+  const boxes = [];
+  const texts = [];
+
+  function collect(node, px, py) {
     const cr = node.contentRect;
     const bm = node.boxModel;
-    const cs = node.computedStyle;
-    const x = px + cr.x - bm.paddingLeft;
-    const y = py + cr.y - bm.paddingTop;
-    const w = cr.width + bm.paddingLeft + bm.paddingRight;
-    const h = cr.height + bm.paddingTop + bm.paddingBottom;
 
-    // 文本
+    if (bm.paddingTop > 0 || bm.paddingRight > 0 || bm.paddingBottom > 0 || bm.paddingLeft > 0) {
+      boxes.push({
+        x: px + cr.x - bm.paddingLeft,
+        y: py + cr.y - bm.paddingTop,
+        w: cr.width + bm.paddingLeft + bm.paddingRight,
+        h: cr.height + bm.paddingTop + bm.paddingBottom,
+      });
+    }
+
     if (node.lineBoxes && node.lineBoxes.length > 0) {
-      ctx.fillStyle = cs.color || '#000';
-      ctx.font = `${cs.fontStyle || 'normal'} ${cs.fontWeight || 400} ${cs.fontSize || 12}px ${cs.fontFamily || 'sans-serif'}`;
-      ctx.textAlign = 'left';
-      ctx.textBaseline = 'alphabetic';
-
-      const cx = x + bm.paddingLeft;
-      const cy = y + bm.paddingTop;
-
+      const cs = node.computedStyle;
+      const fontSize = Math.max(typeof cs.fontSize === 'number' ? cs.fontSize : 13, 13);
       node.lineBoxes.forEach(line => {
-        if (line && line.segments) {
-          line.segments.forEach(seg => {
-            ctx.fillText(seg.text, cx + seg.x, cy + seg.y + seg.height);
+        if (line && line.fragments) {
+          line.fragments.forEach(frag => {
+            texts.push({
+              text: frag.text,
+              x: px + cr.x + frag.x,
+              y: py + cr.y + line.y + line.baseline,
+              fontSize,
+              fontStyle: cs.fontStyle || 'normal',
+              fontWeight: cs.fontWeight || 400,
+            });
           });
         }
       });
     }
 
-    // 递归子元素
     if (node.children) {
-      node.children.forEach(child => {
-        visit(child, px + cr.x - bm.paddingLeft, py + cr.y - bm.paddingTop);
-      });
+      node.children.forEach(child => collect(child, px + cr.x, py + cr.y));
     }
   }
 
-  visit(layoutRoot, offsetX, offsetY);
+  collect(layoutRoot, offsetX, offsetY);
+
+  boxes.forEach(box => {
+    ctx.fillStyle = 'rgba(99, 102, 241, 0.06)';
+    roundRect(box.x, box.y, box.w, box.h, 6);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(99, 102, 241, 0.2)';
+    ctx.lineWidth = 1;
+    roundRect(box.x, box.y, box.w, box.h, 6);
+    ctx.stroke();
+  });
+
+  texts.forEach(t => {
+    ctx.fillStyle = '#1e293b';
+    ctx.font = `${t.fontStyle} ${t.fontWeight} ${t.fontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillText(t.text, t.x, t.y);
+  });
 }
 
 // ============================================================
@@ -200,10 +222,10 @@ const scene3Tree = div({
     flexWrap: 'wrap',
     gap: px(16),
   }, [
-    div({ width: px(70) }, [p('● Product A')]),
-    div({ width: px(70) }, [p('● Product B')]),
-    div({ width: px(70) }, [p('● Product C')]),
-    div({ width: px(70) }, [p('● Product D')]),
+    div({ padding: px(4) }, [p('● Product A')]),
+    div({ padding: px(4) }, [p('● Product B')]),
+    div({ padding: px(4) }, [p('● Product C')]),
+    div({ padding: px(4) }, [p('● Product D')]),
   ]),
 ]);
 
@@ -216,8 +238,8 @@ const scene4Tree = div({
     justifyContent: 'space-between',
     marginBottom: px(8),
   }, [
-    div({ width: px(80) }, [p('Q1 Revenue')]),
-    div({ width: px(40) }, [p('78%')]),
+    div({ padding: px(4) }, [p('Q1 Revenue')]),
+    div({ padding: px(4) }, [p('78%')]),
   ]),
   div({
     height: px(8),
@@ -228,8 +250,8 @@ const scene4Tree = div({
     marginTop: px(16),
     marginBottom: px(8),
   }, [
-    div({ width: px(80) }, [p('Q2 Revenue')]),
-    div({ width: px(40) }, [p('45%')]),
+    div({ padding: px(4) }, [p('Q2 Revenue')]),
+    div({ padding: px(4) }, [p('45%')]),
   ]),
   div({
     height: px(8),

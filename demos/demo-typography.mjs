@@ -116,10 +116,22 @@ function renderLayout(layoutRoot, offsetX, offsetY) {
     const w = cr.width + bm.paddingLeft + bm.paddingRight;
     const h = cr.height + bm.paddingTop + bm.paddingBottom;
 
+    // 绘制元素边框（对于有 padding 的元素）
+    if (bm.paddingTop > 0 || bm.paddingRight > 0 || bm.paddingBottom > 0 || bm.paddingLeft > 0) {
+      ctx.fillStyle = 'rgba(99, 102, 241, 0.06)';
+      roundRect(x, y, w, h, 6);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(99, 102, 241, 0.25)';
+      ctx.lineWidth = 1;
+      roundRect(x, y, w, h, 6);
+      ctx.stroke();
+    }
+
     // 文本
     if (node.lineBoxes && node.lineBoxes.length > 0) {
-      ctx.fillStyle = cs.color || '#000';
-      ctx.font = `${cs.fontStyle || 'normal'} ${cs.fontWeight || 400} ${cs.fontSize || 16}px ${cs.fontFamily || 'sans-serif'}`;
+      ctx.fillStyle = '#1e293b';
+      const fontSize = Math.max(typeof cs.fontSize === 'number' ? cs.fontSize : 16, 16);
+      ctx.font = `${cs.fontStyle || 'normal'} ${cs.fontWeight || 400} ${fontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
       ctx.textAlign = 'left';
       ctx.textBaseline = 'alphabetic';
 
@@ -127,9 +139,9 @@ function renderLayout(layoutRoot, offsetX, offsetY) {
       const cy = y + bm.paddingTop;
 
       node.lineBoxes.forEach(line => {
-        if (line && line.segments) {
-          line.segments.forEach(seg => {
-            ctx.fillText(seg.text, cx + seg.x, cy + seg.y + seg.height);
+        if (line && line.fragments) {
+          line.fragments.forEach(frag => {
+            ctx.fillText(frag.text, px + node.contentRect.x + frag.x, py + node.contentRect.y + line.y + line.baseline);
           });
         }
       });
@@ -138,7 +150,7 @@ function renderLayout(layoutRoot, offsetX, offsetY) {
     // 递归子元素
     if (node.children) {
       node.children.forEach(child => {
-        visit(child, px + cr.x - bm.paddingLeft, py + cr.y - bm.paddingTop);
+        visit(child, px + cr.x, py + cr.y);
       });
     }
   }
