@@ -10,6 +10,8 @@ import type {
   CSSKeyword,
   CSSCalc,
   CSSRelativeLength,
+  CSSFlexibleLength,
+  CSSInteger,
   CSSColor,
 } from '../types/css-values.js';
 
@@ -27,8 +29,15 @@ const KEYWORDS = new Set([
   'currentcolor',
   'row', 'row-reverse', 'column', 'column-reverse',
   'flex-start', 'flex-end', 'space-between', 'space-around', 'space-evenly',
-  'stretch', 'start', 'end', 'dense',
+  'stretch', 'start', 'end', 'dense', 'span',
 ]);
+
+/**
+ * 解析带斜杠的 CSS 值列表（如 grid-column: 1 / 3）
+ */
+export function parseSlashValues(input: string): CSSValue[] {
+  return input.split('/').map((s) => parseCSSValue(s.trim()));
+}
 
 /**
  * 解析 CSS 字符串值为 CSSValue
@@ -69,13 +78,19 @@ export function parseCSSValue(input: string): CSSValue {
     const value = parseFloat(match[1]);
     const unit = match[2];
     if (unit === 'px') return { type: 'length', value, unit: 'px' } as CSSLength;
-    if (unit === 'fr') return { type: 'fr', value } as any; // Using any for now to avoid strictly typed CSSFlexibleLength export issues if any
+    if (unit === 'fr') return { type: 'fr', value } as CSSFlexibleLength;
     if (unit === '%') return { type: 'percentage', value } as CSSPercentage;
     if (unit === 'em') return { type: 'em', value } as CSSRelativeLength;
     if (unit === 'rem') return { type: 'rem', value } as CSSRelativeLength;
   }
 
-  // 纯数字（无单位，可能是 0）
+  // 纯整数 (用于 grid-column 等)
+  const intMatch = trimmed.match(/^([+-]?\d+)$/);
+  if (intMatch) {
+    return { type: 'integer', value: parseInt(intMatch[1]) } as CSSInteger;
+  }
+
+  // 纯数字（带小数点，无单位，可能是 0）
   const numMatch = trimmed.match(/^([+-]?\d*\.?\d+)$/);
   if (numMatch) {
     return { type: 'length', value: parseFloat(numMatch[1]), unit: 'px' } as CSSLength;
@@ -97,4 +112,57 @@ export function parseEdgeValues(input: string): CSSValue[] {
  */
 export function parseValueList(input: string): CSSValue[] {
   return input.split(',').map((s) => parseCSSValue(s.trim()));
+}
+
+/**
+ * 解析 Grid 轨道列表，支持 repeat() 函数
+ */
+export function parseTrackList(input: string): CSSValue[] {
+  const result: CSSValue[] = [];
+  const tokens = tokenizeSpaceSeparated(input);
+
+  for (const token of tokens) {
+    if (token.startsWith('repeat(') && token.endsWith(')')) {
+      const content = token.substring(7, token.length - 1);
+      const commaIndex = content.indexOf(',');
+      if (commaIndex === -1) {
+        throw new Error(`Invalid repeat() function: "${token}"`);
+      }
+      const countPart = content.substring(0, commaIndex).trim();
+      const sizePart = content.substring(commaIndex + 1).trim();
+      const count = parseInt(countPart);
+      if (isNaN(count)) {
+        throw new Error(`Invalid repeat count: "${countPart}"`);
+      }
+      const sizes = parseTrackList(sizePart);
+      for (let i = 0; i < count; i++) {
+        result.push(...sizes);
+      }
+    } else {
+      result.push(parseCSSValue(token));
+    }
+  }
+  return result;
+}
+
+/**
+ * 将字符串按空格拆分，但保留括号内的内容为一个整体
+ */
+function tokenizeSpaceSeparated(input: string): string[] {
+  const tokens: string[] = [];
+  let current = '';
+  let depth = 0;
+  for (let i = 0; i < input.length; i++) {
+    const char = input[i];
+    if (char === '(') depth++;
+    if (char === ')') depth--;
+    if (char === ' ' && depth === 0) {
+      if (current) tokens.push(current);
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  if (current) tokens.push(current);
+  return tokens;
 }

@@ -35,6 +35,12 @@ export interface CSSFlexibleLength {
   value: number;
 }
 
+/** 整数值 (用于 grid line 索引等) */
+export interface CSSInteger {
+  type: 'integer';
+  value: number;
+}
+
 /** CSS calc() 表达式 */
 export interface CSSCalc {
   type: 'calc';
@@ -55,6 +61,7 @@ export type CSSValue =
   | CSSCalc
   | CSSRelativeLength
   | CSSFlexibleLength
+  | CSSInteger
   | CSSColor;
 
 /** 允许 auto 的维度值 */

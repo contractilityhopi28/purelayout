@@ -3,12 +3,13 @@
  *
  * 将用户样式、UA 默认值、继承值合并为 ComputedStyle。
  */
-import type { StyleNode, ComputedStyle, BoxModelStyle, InheritedStyle, FlexStyle, GridStyle } from '../types/style.js';
+import type { StyleNode, ComputedStyle, BoxModelStyle, InheritedStyle, FlexStyle, GridStyle, ComputedGridStyle } from '../types/style.js';
 import type { CSSValue } from '../types/css-values.js';
 import { INITIAL_BOX_MODEL, INITIAL_FLEX, INITIAL_GRID } from './initial.js';
 import { getUADefaults } from './initial.js';
 import { resolveInheritedStyle } from './inherit.js';
 import { INHERITABLE_PROPERTIES } from './properties.js';
+import { parseTrackList, parseSlashValues } from './parser.js';
 
 /**
  * 解析相对值为绝对值（em/rem）
@@ -50,6 +51,7 @@ export function computeStyle(
 
   // 3.5 展开 shorthand 属性
   expandShorthands(userStyle);
+  expandGridShorthands(userStyle);
 
   // 4. 解析相对值
   resolveRelativeValues(userStyle, parentFontSize, rootFontSize);
@@ -86,10 +88,24 @@ export function computeStyle(
   }
 
   // 8. 合并 Grid 属性：用户值 > 初始值
-  const grid: Required<GridStyle> = {
+  const grid: ComputedGridStyle = {
     ...INITIAL_GRID,
     ...userStyle,
-  } as unknown as Required<GridStyle>;
+  } as unknown as ComputedGridStyle;
+
+  // 解析模板字符串
+  if (typeof userStyle.gridTemplateColumns === 'string') {
+    grid.gridTemplateColumns = parseTrackList(userStyle.gridTemplateColumns);
+  }
+  if (typeof userStyle.gridTemplateRows === 'string') {
+    grid.gridTemplateRows = parseTrackList(userStyle.gridTemplateRows);
+  }
+
+  // 解析线索引/名称 (如果用户传了字符串)
+  if (typeof userStyle.gridColumnStart === 'string') grid.gridColumnStart = parseCSSValue(userStyle.gridColumnStart);
+  if (typeof userStyle.gridColumnEnd === 'string') grid.gridColumnEnd = parseCSSValue(userStyle.gridColumnEnd);
+  if (typeof userStyle.gridRowStart === 'string') grid.gridRowStart = parseCSSValue(userStyle.gridRowStart);
+  if (typeof userStyle.gridRowEnd === 'string') grid.gridRowEnd = parseCSSValue(userStyle.gridRowEnd);
 
   if (userGap && userGap.type === 'length') {
     if (!('rowGap' in userStyle)) grid.rowGap = userGap;
@@ -97,6 +113,27 @@ export function computeStyle(
   }
 
   return { boxModel, inherited, flex, grid };
+}
+
+/**
+ * 展开 Grid 相关的 shorthand 属性
+ */
+function expandGridShorthands(style: Record<string, unknown>): void {
+  // grid-column: 1 / 3
+  if (typeof style.gridColumn === 'string') {
+    const parts = parseSlashValues(style.gridColumn);
+    style.gridColumnStart = parts[0];
+    if (parts[1]) style.gridColumnEnd = parts[1];
+    delete style.gridColumn;
+  }
+
+  // grid-row: 1 / 2
+  if (typeof style.gridRow === 'string') {
+    const parts = parseSlashValues(style.gridRow);
+    style.gridRowStart = parts[0];
+    if (parts[1]) style.gridRowEnd = parts[1];
+    delete style.gridRow;
+  }
 }
 
 /**

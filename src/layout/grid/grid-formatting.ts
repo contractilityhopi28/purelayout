@@ -56,27 +56,63 @@ export function layoutGridFormattingContext(
 
   // 3. 解析轨道尺寸
   const colTracks = resolveTracks(gridStyle.gridTemplateColumns, width, colGap);
-  // 对于行，如果没有固定高度，暂时不支持 fr 分配（因为基础逻辑是自适应内容高度）
+  // 对于行，MVP 暂不支持 fr 分配，仅支持固定高度或 auto
   const rowTracks = resolveTracks(gridStyle.gridTemplateRows, containingBlock.height || 0, rowGap);
 
-  // 4. 基础放置逻辑 (按顺序填充)
-  const cols = colTracks.length || 1;
-  const numItems = node.children.length;
-  const rows = Math.ceil(numItems / cols);
-
-  // 如果 rowTracks 不够，补全（按 gridAutoRows 逻辑，MVP 暂用 auto）
-  while (rowTracks.length < rows) {
-    rowTracks.push(0); // 占位，后面根据内容修正
-  }
+  // 4. 放置算法 (Placement)
+  // MVP: 仅支持显式网格索引(1-based) 和 跨度(span)，以及自动放置
+  const colCount = colTracks.length || 1;
+  const items: { node: LayoutNode; colStart: number; colEnd: number; rowStart: number; rowEnd: number }[] = [];
   
-  for (let i = 0; i < numItems; i++) {
-    const child = node.children[i];
-    const colIdx = i % cols;
-    const rowIdx = Math.floor(i / cols);
+  let autoRow = 1;
+  let autoCol = 1;
 
-    const cellW = colTracks[colIdx] || width;
+  for (const child of node.children) {
+    const cs = child.computedStyle.grid;
+    
+    // 确定列范围
+    let cStart = getGridLine(cs.gridColumnStart, autoCol);
+    let cEnd = getGridLine(cs.gridColumnEnd, cStart + 1);
+    
+    // 确定行范围
+    let rStart = getGridLine(cs.gridRowStart, autoRow);
+    let rEnd = getGridLine(cs.gridRowEnd, rStart + 1);
+
+    // 跨度处理 (MVP: 仅处理整数差值)
+    const colSpan = Math.max(1, cEnd - cStart);
+    const rowSpan = Math.max(1, rEnd - rStart);
+
+    items.push({ node: child, colStart: cStart, colEnd: cEnd, rowStart: rStart, rowEnd: rEnd });
+
+    // 简单的自动放置步进 (MVP)
+    autoCol += colSpan;
+    if (autoCol > colCount) {
+      autoCol = 1;
+      autoRow += rowSpan;
+    }
+  }
+
+  // 5. 执行子项布局
+  const maxRow = Math.max(rowTracks.length, ...items.map(i => i.rowEnd - 1));
+  while (rowTracks.length < maxRow) {
+    rowTracks.push(0); // 补全 auto row
+  }
+
+  for (const item of items) {
+    const child = item.node;
+    const colIdx = item.colStart - 1;
+    const rowIdx = item.rowStart - 1;
+    const colSpan = item.colEnd - item.colStart;
+
+    // 计算 Cell 宽度 (跨列累加)
+    let cellW = 0;
+    for (let c = 0; c < colSpan; c++) {
+      cellW += colTracks[colIdx + c] || 0;
+      if (c > 0) cellW += colGap;
+    }
+    if (cellW === 0) cellW = width;
+
     const cellH = rowTracks[rowIdx] || 0;
-
     const childCB: ContainingBlock = { width: cellW, height: cellH || undefined };
 
     if (child.type === 'flex') {
@@ -86,17 +122,18 @@ export function layoutGridFormattingContext(
     } else {
       layoutBlockFormattingContext(child, childCB, options);
     }
-    
-    // 如果是 auto row，根据内容更新 rowTracks
+
+    // 自动高度修正
     if (rowTracks[rowIdx] < child.contentRect.height + resolveLength(child.computedStyle?.boxModel.marginTop || 0) + resolveLength(child.computedStyle?.boxModel.marginBottom || 0)) {
        rowTracks[rowIdx] = child.contentRect.height + resolveLength(child.computedStyle?.boxModel.marginTop || 0) + resolveLength(child.computedStyle?.boxModel.marginBottom || 0);
     }
 
+    // 计算最终坐标 (偏移)
     let offsetX = 0;
-    for (let c = 0; colIdx > c; c++) offsetX += colTracks[c] + colGap;
+    for (let c = 0; c < colIdx; c++) offsetX += (colTracks[c] || 0) + colGap;
     
     let offsetY = 0;
-    for (let r = 0; rowIdx > r; r++) offsetY += rowTracks[r] + rowGap;
+    for (let r = 0; r < rowIdx; r++) offsetY += (rowTracks[r] || 0) + rowGap;
 
     child.contentRect.x = offsetX + resolveLength(child.computedStyle?.boxModel.marginLeft || 0, cellW)
       + resolveLength(child.computedStyle?.boxModel.borderLeftWidth || 0)
@@ -107,9 +144,15 @@ export function layoutGridFormattingContext(
       + resolveLength(child.computedStyle?.boxModel.paddingTop || 0, cellW);
   }
 
-  const totalContentHeight = rowTracks.reduce((sum, h) => sum + h, 0) + Math.max(0, rows - 1) * rowGap;
+  // 6. 容器高度
+  const totalContentHeight = rowTracks.reduce((sum, h) => sum + h, 0) + Math.max(0, rowTracks.length - 1) * rowGap;
   const { height } = resolveHeight(style, containingBlock.height, totalContentHeight);
   node.contentRect.height = height;
+}
+
+function getGridLine(val: any, fallback: number): number {
+  if (val && val.type === 'integer') return val.value;
+  return fallback;
 }
 
 /**

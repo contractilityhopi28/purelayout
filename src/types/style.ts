@@ -55,15 +55,17 @@ export interface FlexStyle {
 // ===== Grid 属性 =====
 
 export interface GridStyle {
-  gridTemplateColumns: CSSValue[];
-  gridTemplateRows: CSSValue[];
-  gridAutoColumns: CSSValue[];
-  gridAutoRows: CSSValue[];
+  gridTemplateColumns: string | CSSValue[];
+  gridTemplateRows: string | CSSValue[];
+  gridAutoColumns: string | CSSValue[];
+  gridAutoRows: string | CSSValue[];
   gridAutoFlow: 'row' | 'column' | 'row dense' | 'column dense';
-  gridColumnStart: CSSValue;
-  gridColumnEnd: CSSValue;
-  gridRowStart: CSSValue;
-  gridRowEnd: CSSValue;
+  gridColumn?: string;
+  gridRow?: string;
+  gridColumnStart: string | CSSValue;
+  gridColumnEnd: string | CSSValue;
+  gridRowStart: string | CSSValue;
+  gridRowEnd: string | CSSValue;
   justifyItems: 'stretch' | 'start' | 'end' | 'center';
   gap: CSSDimensionValue;
   rowGap: CSSDimensionValue;
@@ -126,9 +128,24 @@ export interface StyleNode {
 
 // ===== 计算后样式 =====
 
+export interface ComputedGridStyle {
+  gridTemplateColumns: CSSValue[];
+  gridTemplateRows: CSSValue[];
+  gridAutoColumns: CSSValue[];
+  gridAutoRows: CSSValue[];
+  gridAutoFlow: 'row' | 'column' | 'row dense' | 'column dense';
+  gridColumnStart: CSSValue;
+  gridColumnEnd: CSSValue;
+  gridRowStart: CSSValue;
+  gridRowEnd: CSSValue;
+  justifyItems: 'stretch' | 'start' | 'end' | 'center';
+  rowGap: CSSDimensionValue;
+  columnGap: CSSDimensionValue;
+}
+
 export interface ComputedStyle {
   boxModel: Required<BoxModelStyle>;
   inherited: Required<InheritedStyle>;
   flex: Required<FlexStyle>;
-  grid: Required<GridStyle>;
+  grid: ComputedGridStyle;
 }

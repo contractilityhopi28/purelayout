@@ -104,4 +104,60 @@ describe('Grid: 基础布局 (TDD)', () => {
     // 验证总高度
     expect(result.root.contentRect.height).toBe(210); // 100 + 10 + 100
   });
+
+  it('字符串解析: grid-template-columns 与 repeat()', () => {
+    const tree = div({
+      display: 'grid',
+      width: px(600),
+      gridTemplateColumns: '100px repeat(2, 1fr) 50px',
+      gridTemplateRows: '100px',
+    }, [
+      div({ testId: 'item1' }),
+      div({ testId: 'item2' }),
+      div({ testId: 'item3' }),
+      div({ testId: 'item4' }),
+    ]);
+
+    const result = layout(tree, { containerWidth: 800, textMeasurer: measurer });
+    const c = result.root.children;
+
+    // 100px + 1fr + 1fr + 50px = 600px
+    // 剩余空间 = 600 - 100 - 50 = 450px
+    // 1fr = 225px
+    expect(c[0].contentRect.width).toBe(100);
+    expect(c[1].contentRect.width).toBe(225);
+    expect(c[2].contentRect.width).toBe(225);
+    expect(c[3].contentRect.width).toBe(50);
+    
+    expect(c[1].contentRect.x).toBe(100);
+    expect(c[2].contentRect.x).toBe(325);
+    expect(c[3].contentRect.x).toBe(550);
+  });
+
+  it('显式定位与跨列: grid-column: 1 / 3', () => {
+    const tree = div({
+      display: 'grid',
+      width: px(400),
+      gridTemplateColumns: '100px 100px 100px',
+      gridTemplateRows: '100px',
+    }, [
+      div({ 
+        // 跨两列
+        gridColumn: '1 / 3',
+        testId: 'item1' 
+      }),
+      div({ testId: 'item2' }),
+    ]);
+
+    const result = layout(tree, { containerWidth: 800, textMeasurer: measurer });
+    const c = result.root.children;
+
+    // item1 跨列 1 和 2 -> width 应为 200px
+    expect(c[0].contentRect.width).toBe(200);
+    expect(c[0].contentRect.x).toBe(0);
+
+    // item2 自动放置在第 3 列
+    expect(c[1].contentRect.x).toBe(200);
+    expect(c[1].contentRect.width).toBe(100);
+  });
 });
