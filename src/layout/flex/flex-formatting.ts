@@ -66,11 +66,11 @@ export function layoutFlexFormattingContext(
   const definiteHeight = hasDefiniteHeight ? heightValue.value : 0;
 
   const containerMainSize = isRow ? width : (hasDefiniteHeight ? definiteHeight : Infinity);
-  const containerCrossSize = isRow ? definiteHeight : width;
+  const containerCrossSize = isRow ? (hasDefiniteHeight ? definiteHeight : 0) : width;
   const gapMain = resolveGap(flex, isRow, true);
   const gapCross = resolveGap(flex, isRow, false);
 
-  // 3. 构建 context (相对于当前节点 content box 起点 0,0)
+  // 3. 构建 context
   const contentOriginX = 0;
   const contentOriginY = 0;
 
@@ -85,40 +85,21 @@ export function layoutFlexFormattingContext(
   const items = collectFlexItems(node, ctx);
   sortFlexItemsByOrder(items);
 
-  // 5. 计算 flex base sizes
-  resolveFlexBaseSizes(items, ctx);
+  // 5. 计算 flex base sizes (初步)
+  resolveFlexBaseSizes(items, ctx, options);
 
-  // 6. 拆行并布局
-  let lines: FlexLine[];
-  if (isWrap) {
-    lines = collectFlexLines(items, containerMainSize, gapMain);
-  } else {
-    lines = [{ items, crossSize: 0, baseline: 0 }];
-  }
+  // 6. 拆行并布局 (初步)
+  let lines = buildLines(items, containerMainSize, gapMain, isWrap);
 
-  // 7. 对每行执行弹性算法 + justify-content + 交叉轴对齐
-  const isSingleLine = lines.length === 1;
-  for (const line of lines) {
-    resolveFlexibleLengths(line.items, containerMainSize, gapMain);
-    applyJustifyContent(line, containerMainSize, gapMain, flex.justifyContent);
+  // 7. 对齐与弹性计算
+  performFlexLayoutPass(lines, ctx, flex);
 
-    if (isSingleLine && containerCrossSize > 0) {
-      resolveCrossAxisForLine(line, flex.alignItems, isRow, containerCrossSize, true);
-    } else {
-      resolveCrossAxisForLine(line, flex.alignItems, isRow, containerCrossSize, false);
-    }
-  }
-
-  // 8. align-content 对齐行
-  applyAlignContent(lines, ctx, flex.alignContent, flex.alignItems);
-  ctx.lines = lines;
-
-  // 9. 递归布局 flex item 内部内容
+  // 8. 递归布局子元素（关键：在此步骤更新 mainSize 和 crossSize）
   for (const item of items) {
     layoutFlexItemContent(item, ctx, options);
   }
 
-  // 重新计算 cross axis
+  // 9. 重新计算每行 crossSize (内容撑开后可能变化)
   if (!isWrap || flex.alignContent !== 'stretch') {
     for (const line of lines) {
       let maxCrossSize = 0;
@@ -147,11 +128,39 @@ export function layoutFlexFormattingContext(
   const { height } = resolveHeight(style, containingBlock.height, contentHeightForResolver);
   node.contentRect.height = height;
 
-  // 11. 设置相对坐标
+  // 11. 最终坐标同步 (再次运行以响应高度变化)
+  if (!isRow) {
+     // 对于 column 布局，需要重新分配空间（如果高度变了）
+     performFlexLayoutPass(lines, ctx, flex);
+  }
   applyAbsolutePositions(ctx);
 
   const orderedChildren = items.map(item => item.node);
   node.children = orderedChildren;
+}
+
+function buildLines(items: FlexItemState[], containerMainSize: number, gapMain: number, isWrap: boolean): FlexLine[] {
+  if (isWrap) {
+    return collectFlexLines(items, containerMainSize, gapMain);
+  } else {
+    return [{ items, crossSize: 0, baseline: 0 }];
+  }
+}
+
+function performFlexLayoutPass(lines: FlexLine[], ctx: FlexContext, flex: any) {
+  const isSingleLine = lines.length === 1;
+  for (const line of lines) {
+    resolveFlexibleLengths(line.items, ctx.containerMainSize, ctx.gapMain);
+    applyJustifyContent(line, ctx.containerMainSize, ctx.gapMain, flex.justifyContent);
+
+    if (isSingleLine && ctx.containerCrossSize > 0) {
+      resolveCrossAxisForLine(line, flex.alignItems, ctx.isRow, ctx.containerCrossSize, true);
+    } else {
+      resolveCrossAxisForLine(line, flex.alignItems, ctx.isRow, ctx.containerCrossSize, false);
+    }
+  }
+  applyAlignContent(lines, ctx, flex.alignContent, flex.alignItems);
+  ctx.lines = lines;
 }
 
 function resolveGap(flex: any, isRow: boolean, isMainAxis: boolean): number {
@@ -210,7 +219,7 @@ function positionWithSpacing(items: FlexItemState[], spacing: number, edge: numb
 function resolveCrossAxisForLine(line: FlexLine, alignItems: AlignItemsValue, isRow: boolean, containerCrossSize: number, isSingleLine: boolean): void {
   let maxCrossSize = 0;
   for (const item of line.items) {
-    const cs = getItemDefiniteCrossSize(item, isRow);
+    const cs = getItemDefiniteCrossSize(item, isRow, containerCrossSize);
     item.crossSize = cs;
     const outer = cs + item.crossPaddingBorder + item.crossMarginStart + item.crossMarginEnd;
     if (outer > maxCrossSize) maxCrossSize = outer;
@@ -245,15 +254,19 @@ function getEffectiveAlign(item: FlexItemState, containerAlign: AlignItemsValue)
   return self !== 'auto' ? self : containerAlign;
 }
 
-function getItemDefiniteCrossSize(item: FlexItemState, isRow: boolean): number {
+function getItemDefiniteCrossSize(item: FlexItemState, isRow: boolean, containerCrossSize: number): number {
   const bm = item.node.computedStyle.boxModel;
   const sizeValue = isRow ? bm.height : bm.width;
   let value = 0;
   if (sizeValue.type === 'length') value = sizeValue.value;
-  else if (sizeValue.type === 'percentage') value = (sizeValue.value / 100) * 400; // FIXME
+  else if (sizeValue.type === 'percentage') value = (sizeValue.value / 100) * containerCrossSize;
+  else if (sizeValue.type === 'keyword' && sizeValue.value === 'auto' && containerCrossSize > 0) {
+    // 处理 stretch 默认行为：如果交叉轴尺寸固定，auto 应当填满
+    value = containerCrossSize - item.crossPaddingBorder - item.crossMarginStart - item.crossMarginEnd;
+  }
   else return 0;
   if (bm.boxSizing === 'border-box') value = Math.max(0, value - item.crossPaddingBorder);
-  return value;
+  return Math.max(0, value);
 }
 
 function hasDefiniteCrossSize(item: FlexItemState, isRow: boolean): boolean {
@@ -323,11 +336,30 @@ function layoutFlexItemContent(item: FlexItemState, ctx: FlexContext, options: L
     const sizeValue = ctx.isRow ? bm.height : bm.width;
     return sizeValue.type === 'length' || sizeValue.type === 'percentage';
   })();
-  const crossSizeForChild = hasDefiniteCrossSize ? (ctx.isRow ? item.crossSize : item.mainSize) : undefined;
-  const childCB = { width: ctx.isRow ? item.mainSize : item.crossSize, height: crossSizeForChild ?? (ctx.isRow ? item.crossSize : item.mainSize) };
+  
+  // 确定子元素的包含块尺寸（物理尺寸）
+  const widthForChild = ctx.isRow ? item.mainSize : item.crossSize;
+  const heightForChild = ctx.isRow ? item.crossSize : item.mainSize;
+
+  const childCB = { 
+    width: widthForChild, 
+    height: hasDefiniteCrossSize ? heightForChild : undefined 
+  };
+
   if (node.type === 'flex') layoutFlexFormattingContext(node, childCB, options);
+  else if (node.type === 'grid') layoutGridFormattingContext(node, childCB, options);
   else layoutBlockFormattingContext(node, childCB, options);
-  if (!hasDefiniteCrossSize && node.contentRect.height > 0) item.crossSize = ctx.isRow ? node.contentRect.height : node.contentRect.width;
+
+  // 重要：回填实际尺寸！
+  if (!hasDefiniteCrossSize) {
+    if (ctx.isRow) {
+       // Row 布局，高度（crossSize）自适应内容
+       if (node.contentRect.height > 0) item.crossSize = node.contentRect.height;
+    } else {
+       // Column 布局，高度（mainSize）自适应内容
+       if (node.contentRect.height > 0) item.mainSize = node.contentRect.height;
+    }
+  }
 }
 
 function applyAbsolutePositions(ctx: FlexContext): void {

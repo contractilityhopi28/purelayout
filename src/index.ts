@@ -12,6 +12,8 @@ export type {
   CSSKeyword,
   CSSCalc,
   CSSRelativeLength,
+  CSSFlexibleLength,
+  CSSInteger,
   CSSColor,
   CSSDimensionValue,
   CSSMarginValue,
@@ -26,6 +28,8 @@ export type {
   InheritedStyle,
   BoxModelStyle,
   FlexStyle,
+  GridStyle,
+  ComputedGridStyle,
   DisplayValue,
   OverflowValue,
   BoxSizingValue,
@@ -69,3 +73,8 @@ export type { PretextLayoutLineResult } from './text/pretext-measurer.js';
 
 // 工具函数导出
 export { px, pct, em, rem, auto, normal, none, keyword } from './utils/format.js';
+
+// PPT 渲染器导出
+export { PPTAdapter } from './renderers/ppt/adapter.js';
+export { exportToPptx } from './renderers/ppt/driver.js';
+export type * from './renderers/ppt/types.js';

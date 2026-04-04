@@ -1,7 +1,7 @@
 /**
  * Inline Formatting Context 布局
  */
-import type { LayoutNode, LayoutOptions } from '../../types/layout.js';
+import type { LayoutNode, LayoutOptions, LineBox } from '../../types/layout.js';
 import type { ComputedStyle } from '../../types/style.js';
 import type { TextStyle } from '../../types/text.js';
 import type { WhiteSpaceValue } from '../../types/style.js';
@@ -11,6 +11,7 @@ import { processWhitespace } from './whitespace.js';
 
 export interface InlineRunResult {
   totalHeight: number;
+  lineBoxes: LineBox[];
 }
 
 /**
@@ -53,31 +54,22 @@ export function layoutInlineRun(
     }
   }
 
-  if (fragments.length === 0) return { totalHeight: 0 };
+  if (fragments.length === 0) return { totalHeight: 0, lineBoxes: [] };
 
   // 构建行框 (lb.y 此时是相对于 0 的)
   const lineBoxes = buildLineBoxes(fragments, availableWidth, options, whiteSpace);
 
   let totalHeight = 0;
   for (const lb of lineBoxes) {
-    lb.y = startY + totalHeight; // 绝对 Y
+    lb.y = startY + totalHeight; // 相对当前 BFC 的 Y
     for (const frag of lb.fragments) {
-      frag.x += startX; // 绝对 X
+      frag.x += startX; // 相对当前 BFC 的 X
     }
     totalHeight += lb.height;
   }
 
   let maxWidth = 0;
   for (const lb of lineBoxes) maxWidth = Math.max(maxWidth, lb.width);
-
-  if (nodes.length > 0) {
-    const firstNode = nodes[0];
-    firstNode.lineBoxes = lineBoxes;
-    firstNode.contentRect.x = startX;
-    firstNode.contentRect.y = startY;
-    firstNode.contentRect.height = totalHeight;
-    firstNode.contentRect.width = maxWidth;
-  }
 
   for (const node of nodes) {
     if (node.type === 'inline') {
@@ -113,7 +105,7 @@ export function layoutInlineRun(
       }
     }
   }
-  return { totalHeight };
+  return { totalHeight, lineBoxes };
 }
 
 function getWhiteSpace(nodes: LayoutNode[]): WhiteSpaceValue {

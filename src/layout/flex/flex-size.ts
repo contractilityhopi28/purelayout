@@ -2,7 +2,7 @@
  * Flex base size 和 hypothetical main size 计算
  */
 import type { FlexItemState, FlexContext } from './types.js';
-import type { LayoutNode } from '../../types/layout.js';
+import type { LayoutNode, LayoutOptions } from '../../types/layout.js';
 import { resolveLength } from '../../css/cascade.js';
 import { layoutBlockFormattingContext } from '../block/block-formatting.js';
 
@@ -11,7 +11,7 @@ import { layoutBlockFormattingContext } from '../block/block-formatting.js';
  *
  * 规范 Section 9
  */
-export function resolveFlexBaseSizes(items: FlexItemState[], ctx: FlexContext): void {
+export function resolveFlexBaseSizes(items: FlexItemState[], ctx: FlexContext, options: LayoutOptions): void {
   for (const item of items) {
     // 1. 确定 flex base size
     if (item.flexBasis >= 0) {
@@ -24,7 +24,7 @@ export function resolveFlexBaseSizes(items: FlexItemState[], ctx: FlexContext): 
         item.flexBaseSize = mainSizeDef;
       } else {
         // 无 definite main size → 使用内容尺寸
-        item.flexBaseSize = measureItemContentSize(item.node, ctx);
+        item.flexBaseSize = measureItemContentSize(item.node, ctx, options);
       }
     }
 
@@ -68,21 +68,19 @@ function getMainSizeDefinite(node: LayoutNode, isRow: boolean, containerMainSize
 /**
  * 测量 flex item 的内容尺寸（用于 auto flex-basis）
  */
-function measureItemContentSize(node: LayoutNode, ctx: FlexContext): number {
-  const bm = node.computedStyle.boxModel;
-  const containerWidth = ctx.isRow ? ctx.containerMainSize : ctx.containerMainSize;
+function measureItemContentSize(node: LayoutNode, ctx: FlexContext, options: LayoutOptions): number {
+  const containerWidth = ctx.isRow ? ctx.containerMainSize : ctx.containerCrossSize;
 
   // 递归布局内部内容以获取 content size
   const childContainingBlock = { width: containerWidth, height: undefined };
 
   // 临时设置一个较大的宽度让内容自然排列
   node.contentRect.width = containerWidth;
-  layoutBlockFormattingContext(node, childContainingBlock, ctx.node.testId ? { ...globalThis as any, containerWidth } : { containerWidth, textMeasurer: { measureTextSegments: () => [], getFontMetrics: () => ({ ascent: 14, descent: 4 }) } });
+  layoutBlockFormattingContext(node, childContainingBlock, options);
 
   // 返回主轴方向的 content size
   if (ctx.isRow) {
     // 对于 row，内容宽度由 width 决定（可能还是 auto），取子元素的最大宽度
-    // 简化：如果没有子元素返回 0
     if (node.children.length === 0) return 0;
     let maxEnd = 0;
     for (const child of node.children) {

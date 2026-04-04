@@ -28,6 +28,7 @@ export const INITIAL_BOX_MODEL: Required<BoxModelStyle> = {
   borderBottomWidth: px(0),
   borderLeftWidth: px(0),
   verticalAlign: 'baseline',
+  backgroundColor: { type: 'color', value: 'transparent' },
 };
 
 export const INITIAL_INHERITED: Required<InheritedStyle> = {

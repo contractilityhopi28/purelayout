@@ -113,11 +113,18 @@ export function layoutGridFormattingContext(
 
     // 计算 Cell 宽度 (跨列累加)
     let cellW = 0;
-    for (let c = 0; c < colSpan; c++) {
-      cellW += colTracks[colIdx + c] || 0;
-      if (c > 0) cellW += colGap;
+    if (colTracks.length === 0) {
+      cellW = width;
+    } else {
+      for (let c = 0; c < colSpan; c++) {
+        const trackW = colTracks[colIdx + c];
+        if (trackW !== undefined) {
+          cellW += trackW;
+          if (c > 0) cellW += colGap;
+        }
+      }
     }
-    if (cellW === 0) cellW = width;
+    if (cellW <= 0) cellW = width;
 
     const cellH = rowTracks[rowIdx] || 0;
     

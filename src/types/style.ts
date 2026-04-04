@@ -116,6 +116,7 @@ export interface BoxModelStyle {
   borderBottomWidth: CSSDimensionValue;
   borderLeftWidth: CSSDimensionValue;
   verticalAlign: VerticalAlignValue;
+  backgroundColor: CSSColor;
 }
 
 // ===== 输入样式节点 =====

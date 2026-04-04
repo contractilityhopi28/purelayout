@@ -1,6 +1,20 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 import { PretextMeasurer } from '../../../src/text/pretext-measurer.js';
 import type { TextStyle } from '../../../src/types/text.js';
+
+// Polyfill global environment for @chenglou/pretext
+try {
+  const { createCanvas } = require('canvas');
+  if (typeof global !== 'undefined' && !(global as any).OffscreenCanvas) {
+    (global as any).OffscreenCanvas = class {
+      constructor(width: number, height: number) {
+        return createCanvas(width, height);
+      }
+    };
+  }
+} catch (e) {
+  // canvas not installed, that's fine for some environments
+}
 
 const defaultStyle: TextStyle = {
   fontFamily: 'serif',

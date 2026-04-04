@@ -82,6 +82,7 @@ export function layoutBlockFormattingContext(
       if (inlineRun.length > 0) {
         const inlineResult = layoutInlineRun(inlineRun, innerWidth, currentY, options, contentOriginX);
         currentY += inlineResult.totalHeight;
+        node.lineBoxes = (node.lineBoxes || []).concat(inlineResult.lineBoxes);
         inlineRun = [];
         hasPrecedingContent = true;
       }
@@ -136,6 +137,7 @@ export function layoutBlockFormattingContext(
   if (inlineRun.length > 0) {
     const inlineResult = layoutInlineRun(inlineRun, innerWidth, currentY, options, contentOriginX);
     currentY += inlineResult.totalHeight;
+    node.lineBoxes = (node.lineBoxes || []).concat(inlineResult.lineBoxes);
     hasPrecedingContent = true;
   }
 
